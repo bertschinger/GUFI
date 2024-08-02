@@ -81,6 +81,9 @@ typedef struct QPTPoolThreadData {
 
     sll_t waiting;         /* generally push into this queue */
     sll_t deferred;        /* push into here if waiting queue is too big; pop when waiting queue is empty */
+    #if defined(DEBUG) && defined(QPTPOOL_QUEUE_SIZE)
+    uint64_t max_queue_size; /* tracks the maximum number of entries held in queue */
+    #endif
     pthread_mutex_t mutex;
     pthread_cond_t cv;
     size_t next_queue;     /* push to this thread when enqueuing */
@@ -380,6 +383,10 @@ static void *worker_function(void *args) {
         #endif
     }
 
+    #if defined(DEBUG) && defined(QPTPOOL_QUEUE_SIZE)
+    printf("exiting: max_queue_size: %zu\n", tw->max_queue_size);
+    #endif
+
     /* signal all threads to loop, just in case */
     timestamp_create_start(wf_broadcast);
     for(size_t i = 0; i < ctx->nthreads; i++) {
@@ -662,6 +669,12 @@ QPTPool_enqueue_dst_t QPTPool_enqueue(QPTPool_t *ctx, const size_t id, QPTPoolFu
         sll_push(&next->deferred, qi);
         ret = QPTPool_enqueue_DEFERRED;
     }
+
+    #if defined(DEBUG) && defined(QPTPOOL_QUEUE_SIZE)
+    uint64_t total = next->waiting.size + next->deferred.size;
+    if (total > next->max_queue_size)
+        next->max_queue_size = total;
+    #endif
 
     pthread_mutex_lock(&ctx->mutex);
     ctx->incomplete++;
