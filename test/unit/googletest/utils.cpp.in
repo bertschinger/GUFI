@@ -844,6 +844,47 @@ TEST(trailing_non_match_index, paths) {
     EXPECT_EQ(trailing_non_match_index(nullptr, 10,              match, match_len), (size_t) 0);
 }
 
+TEST(strlen_no_trailing_slashes, test) {
+    EXPECT_EQ(strlen_no_trailing_slashes(""), 0);
+    EXPECT_EQ(strlen_no_trailing_slashes("/"), 1);
+    EXPECT_EQ(strlen_no_trailing_slashes("//"), 1);
+    EXPECT_EQ(strlen_no_trailing_slashes("///"), 1);
+    EXPECT_EQ(strlen_no_trailing_slashes("/a//"), 2);
+    EXPECT_EQ(strlen_no_trailing_slashes("/a/b/"), 4);
+}
+
+TEST(trim_trailing_slashes, test) {
+    char s[MAXPATH];
+
+    strcpy(s, "");
+    trim_trailing_slashes(s);
+    EXPECT_EQ(strcmp(s, ""), 0);
+
+    strcpy(s, "/");
+    trim_trailing_slashes(s);
+    EXPECT_EQ(strcmp(s, "/"), 0);
+
+    strcpy(s, "//");
+    trim_trailing_slashes(s);
+    EXPECT_EQ(strcmp(s, "/"), 0);
+
+    strcpy(s, "///");
+    trim_trailing_slashes(s);
+    EXPECT_EQ(strcmp(s, "/"), 0);
+
+    strcpy(s, "/a/");
+    trim_trailing_slashes(s);
+    EXPECT_EQ(strcmp(s, "/a"), 0);
+
+    strcpy(s, "/a/b/");
+    trim_trailing_slashes(s);
+    EXPECT_EQ(strcmp(s, "/a/b"), 0);
+
+    strcpy(s, "/a/b//");
+    trim_trailing_slashes(s);
+    EXPECT_EQ(strcmp(s, "/a/b"), 0);
+}
+
 TEST(setup_directory_skip, file) {
     const std::string skip_dirs[] = {
         "skip0",

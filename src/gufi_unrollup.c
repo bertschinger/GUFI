@@ -210,8 +210,7 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        /* remove trailing slashes */
-        len = trailing_non_match_index(argv[i] + 1, strlen(argv[i] + 1), "/", 1) + 1;
+        len = trim_trailing_slashes(argv[i]);
 
         struct Unrollup *mywork = malloc(sizeof(struct Unrollup));
 

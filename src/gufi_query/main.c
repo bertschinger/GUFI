@@ -189,8 +189,7 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        /* remove trailing slashes (+ 1 to keep at least 1 character) */
-        argvi_len = trailing_non_match_index(argv[i] + 1, argvi_len - 1, "/", 1) + 1;
+        argvi_len = trim_trailing_slashes(argv[i]);
 
         realpaths[i - idx] = realpath(argv[i], NULL);
         if (!realpaths[i - idx]) {

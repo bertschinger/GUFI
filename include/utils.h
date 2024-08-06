@@ -138,6 +138,9 @@ size_t trailing_match_index(const char *str, size_t len,
 size_t trailing_non_match_index(const char *str, size_t len,
                                 const char *not_match, const size_t not_match_count);
 
+size_t strlen_no_trailing_slashes(const char *s);
+size_t trim_trailing_slashes(char *s);
+
 /*
  * convenience function to find first slash before the basename
  *

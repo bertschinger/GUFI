@@ -467,8 +467,8 @@ int main(int argc, char * argv[]) {
         INSTALL_STR(&pa.in.name,   argv[idx++]);
         INSTALL_STR(&pa.in.nameto, argv[idx++]);
 
-        pa.in.name.len   = trailing_non_match_index(pa.in.name.data,   pa.in.name.len   - 1, "/", 1) + 1;
-        pa.in.nameto.len = trailing_non_match_index(pa.in.nameto.data, pa.in.nameto.len - 1, "/", 1) + 1;
+        pa.in.name.len = strlen_no_trailing_slashes(pa.in.name.data);
+        pa.in.nameto.len = strlen_no_trailing_slashes(pa.in.nameto.data);
 
         pa.src_dirname_len = dirname_len(pa.in.name.data,
                                          pa.in.name.len - (pa.in.name.data[pa.in.name.len - 1] == '/'));

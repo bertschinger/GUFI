@@ -1076,8 +1076,8 @@ static void sqlite_basename(sqlite3_context *context, int argc, sqlite3_value **
     const size_t path_len = strlen(path);
 
     /* remove trailing slashes */
-    const size_t trimmed_len = trailing_non_match_index(path, path_len, "/", 1);
-    if (!trimmed_len) {
+    const size_t trimmed_len = strlen_no_trailing_slashes(path);
+    if (trimmed_len == 1 && *path == '/') {
         sqlite3_result_text(context, "/", 1, SQLITE_STATIC);
         return;
     }

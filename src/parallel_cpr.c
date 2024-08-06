@@ -357,7 +357,7 @@ int main(int argc, char * argv[]) {
 
     argc--;
     for(int i = idx; i < argc; i++) {
-        const char *path = argv[i];
+        char *path = argv[i];
 
         struct stat st;
         if (lstat(path, &st) != 0) {
@@ -371,10 +371,9 @@ int main(int argc, char * argv[]) {
         struct work work;
         memset(&work, 0, sizeof(work));
 
-        /* remove trailing slashes (+ 1 to keep at least 1 character) */
-        const size_t len = strlen(path);
-        work.name_len = trailing_non_match_index(path + 1, len - 1, "/", 1) + 1;;
+        work.name_len = trim_trailing_slashes(path);
         memcpy(work.name, path, work.name_len);
+
         work.basename_len = work.name_len - trailing_match_index(work.name, work.name_len, "/", 1);
         work.root_parent.data = path;
         work.root_parent.len = dirname_len(path, work.name_len);

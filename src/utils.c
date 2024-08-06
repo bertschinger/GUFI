@@ -595,6 +595,32 @@ size_t trailing_non_match_index(const char *str, size_t len,
 }
 
 /*
+ * Returns length of input string without any trailing '/'.
+ *
+ * If the string is only '/', length is 1.
+ */
+size_t strlen_no_trailing_slashes(const char *s) {
+    if (*s == '\0')
+        return 0;
+
+    /* Length of input is at least 1: */
+    return trailing_non_match_index(s + 1, strlen(s) - 1, "/", 1) + 1;
+}
+
+/*
+ * Modifies the input string by replacing the first trailing '/', if any,
+ * with NUL and returns the new length of the input (without terminating NUL).
+ *
+ * This must only be used on strings which are safe to modify.
+ */
+size_t trim_trailing_slashes(char *s) {
+    size_t len = strlen_no_trailing_slashes(s);
+    s[len] = '\0';
+
+    return len;
+}
+
+/*
  * find first slash before the basename a.k.a. get the dirname length
  *
  * /      -> /
