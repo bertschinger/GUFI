@@ -62,6 +62,8 @@
 
 cmake_minimum_required(VERSION 3.1.0)
 
+set(CMAKE_C_FLAGS "-O0 -g")
+
 # Don't allow in-source build
 get_filename_component(CMAKE_SOURCE_DIR "${CMAKE_SOURCE_DIR}" REALPATH)
 get_filename_component(CMAKE_BINARY_DIR "${CMAKE_BINARY_DIR}" REALPATH)

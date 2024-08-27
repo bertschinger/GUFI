@@ -118,6 +118,7 @@ set(GUFI_SOURCES
   trie.c
   utils.c
   xattrs.c
+  RbQueue.c
 )
 add_library(GUFI STATIC ${GUFI_SOURCES})
 add_dependencies(GUFI install_dependencies)
@@ -182,6 +183,7 @@ set(C_SOURCES
   parallel_cpr.c
   parallel_rmr.c
   querydbs.c
+  rbq_test.c
 )
 
 # build the C executables
