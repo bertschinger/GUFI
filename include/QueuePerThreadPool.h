@@ -71,6 +71,8 @@ OF SUCH DAMAGE.
 #include "OutputBuffers.h"
 #endif
 
+#include "RbQueue.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

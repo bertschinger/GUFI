@@ -77,11 +77,11 @@ typedef enum {
 
 /* The context for a single thread in QPTPool */
 typedef struct QPTPoolThreadData {
-    sll_t claimed;          /* work items that have already been claimed by this thread */
+    struct rbq claimed; /* work items that have already been claimed by this thread */
     pthread_mutex_t claimed_mutex;
 
-    sll_t waiting;         /* generally push into this queue */
-    sll_t deferred;        /* push into here if waiting queue is too big; pop when waiting queue is empty */
+    struct rbq waiting; /* generally push into this queue */
+    struct rbq deferred; /* push into here if waiting queue is too big; pop when waiting queue is empty */
     pthread_mutex_t mutex;
     pthread_cond_t cv;
     size_t next_queue;     /* push to this thread when enqueuing */
@@ -150,14 +150,14 @@ static inline uint64_t max(const uint64_t lhs, const uint64_t rhs) {
         QPTPoolThreadData_t *target = &ctx->data[i];                               \
                                                                                    \
         if (pthread_mutex_trylock(&target->mutex_name) == 0) {                     \
-            if (target->queue_name.size) {                                         \
+            if (rbq_used(&target->queue_name)) {                                         \
                 /* always take at least 1 */                                       \
                 const uint64_t take = max(                                         \
-                    target->queue_name.size * ctx->steal.num / ctx->steal.denom,   \
+                    rbq_used(&target->queue_name) * ctx->steal.num / ctx->steal.denom,   \
                     1);                                                            \
-                sll_move_first(&tw->waiting, &target->queue_name, take);           \
+                rbq_append_n(&tw->waiting, &target->queue_name, take);           \
                 pthread_mutex_unlock(&target->mutex_name);                         \
-                rc = tw->waiting.size;                                             \
+                rc = rbq_used(&tw->waiting);                                             \
                 break;                                                             \
             }                                                                      \
                                                                                    \
@@ -208,7 +208,7 @@ static uint64_t steal_claimed(QPTPool_t *ctx, const size_t id,
  */
 static void maybe_steal_work(QPTPool_t *ctx, QPTPoolThreadData_t *tw, size_t id) {
     if (!ctx->steal.num || (ctx->nthreads < 2) ||
-        tw->waiting.size || tw->deferred.size ||
+        rbq_used(&tw->waiting) || rbq_used(&tw->deferred) ||
         !ctx->incomplete) {
         return;
     }
@@ -253,7 +253,7 @@ static void wait_for_work(QPTPool_t *ctx, QPTPoolThreadData_t *tw) {
          * other threads, just not this one
          */
         ((ctx->state == STOPPING) && ctx->incomplete &&
-         !tw->waiting.size && !tw->deferred.size)
+         !rbq_used(&tw->waiting)&& !rbq_used(&tw->deferred))
         ) {
         pthread_mutex_unlock(&ctx->mutex);
         pthread_cond_wait(&tw->cv, &tw->mutex);
@@ -268,11 +268,11 @@ static void wait_for_work(QPTPool_t *ctx, QPTPoolThreadData_t *tw) {
 static void claim_work(QPTPoolThreadData_t *tw) {
     /* move entire queue into work and clear out queue */
     pthread_mutex_lock(&tw->claimed_mutex);
-    if (tw->waiting.size) {
-        sll_move(&tw->claimed, &tw->waiting);
+    if (rbq_used(&tw->waiting)) {
+        rbq_append(&tw->claimed, &tw->waiting);
     }
     else {
-        sll_move(&tw->claimed, &tw->deferred);
+        rbq_append(&tw->claimed, &tw->deferred);
     }
     pthread_mutex_unlock(&tw->claimed_mutex);
 }
@@ -281,7 +281,7 @@ static void claim_work(QPTPoolThreadData_t *tw) {
 static void dump_queue_size_stats(QPTPool_t *ctx, QPTPoolThreadData_t *tw) {
     pthread_mutex_lock(&ctx->mutex);
     pthread_mutex_lock(&print_mutex);
-    tw->waiting.size = tw->claimed.size;
+    rbq_used(&tw->waiting) = rbq_used(&tw->claimed);
 
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
@@ -289,13 +289,13 @@ static void dump_queue_size_stats(QPTPool_t *ctx, QPTPoolThreadData_t *tw) {
 
     size_t sum = 0;
     for(size_t i = 0; i < ctx->nthreads; i++) {
-        fprintf(stderr, "%zu ", ctx->data[i].waiting.size);
-        sum += ctx->data[i].waiting.size;
-        fprintf(stderr, "%zu ", ctx->data[i].deferred.size);
-        sum += ctx->data[i].deferred.size;
+        fprintf(stderr, "%zu ", rbq_used(&ctx->data[i].waiting));
+        sum += rbq_used(&ctx->data[i].waiting);
+        fprintf(stderr, "%zu ", rbq_used(&ctx->data[i].deferred));
+        sum += rbq_used(&ctx->data[i].deferred);
     }
     fprintf(stderr, "%zu\n", sum);
-    tw->waiting.size = 0;
+    rbq_used(&tw->waiting) = 0;
     pthread_mutex_unlock(&print_mutex);
     pthread_mutex_unlock(&ctx->mutex);
 }
@@ -324,7 +324,7 @@ static size_t process_work(QPTPool_t *ctx, QPTPoolThreadData_t *tw, size_t id) {
      */
     timestamp_create_start(wf_get_queue_head);
     pthread_mutex_lock(&tw->claimed_mutex);
-    struct queue_item *qi = (struct queue_item *) sll_pop(&tw->claimed);
+    struct queue_item *qi = (struct queue_item *) rbq_pop(&tw->claimed);
     pthread_mutex_unlock(&tw->claimed_mutex);
     timestamp_end_print(ctx->debug_buffers, id, "wf_get_queue_head", wf_get_queue_head);
 
@@ -336,7 +336,7 @@ static size_t process_work(QPTPool_t *ctx, QPTPoolThreadData_t *tw, size_t id) {
 
         timestamp_create_start(wf_next_work);
         pthread_mutex_lock(&tw->claimed_mutex);
-        qi = (struct queue_item *) sll_pop(&tw->claimed);
+        qi = (struct queue_item *) rbq_pop(&tw->claimed);
         pthread_mutex_unlock(&tw->claimed_mutex);
         timestamp_end_print(ctx->debug_buffers, id, "wf_next_work", wf_next_work);
 
@@ -374,7 +374,7 @@ static void *worker_function(void *args) {
         timestamp_set_end(wf_wait);
 
         if ((ctx->state == STOPPING) && !ctx->incomplete &&
-            !tw->waiting.head && !tw->deferred.size) {
+            !rbq_used(&tw->waiting) && !rbq_used(&tw->deferred)) {
             pthread_mutex_unlock(&ctx->mutex);
             pthread_mutex_unlock(&tw->mutex);
             break;
@@ -641,10 +641,10 @@ QPTPool_t *QPTPool_init_with_props(const size_t nthreads,
     /* set up thread data, but not threads */
     for(size_t i = 0; i < nthreads; i++) {
         QPTPoolThreadData_t *data = &ctx->data[i];
-        sll_init(&data->claimed);
+        rbq_init(&data->claimed);
         pthread_mutex_init(&data->claimed_mutex, NULL);
-        sll_init(&data->waiting);
-        sll_init(&data->deferred);
+        rbq_init(&data->waiting);
+        rbq_init(&data->deferred);
         pthread_mutex_init(&data->mutex, NULL);
         pthread_cond_init(&data->cv, NULL);
         data->next_queue = i;
@@ -706,12 +706,12 @@ QPTPool_enqueue_dst_t QPTPool_enqueue(QPTPool_t *ctx, const size_t id, QPTPoolFu
     QPTPool_enqueue_dst_t ret = QPTPool_enqueue_ERROR;
 
     pthread_mutex_lock(&next->mutex);
-    if (!ctx->queue_limit || (next->waiting.size < ctx->queue_limit)) {
-        sll_push(&next->waiting, qi);
+    if (!ctx->queue_limit || (rbq_used(&next->waiting) < ctx->queue_limit)) {
+        rbq_push(&next->waiting, qi);
         ret = QPTPool_enqueue_WAIT;
     }
     else {
-        sll_push(&next->deferred, qi);
+        rbq_push(&next->deferred, qi);
         ret = QPTPool_enqueue_DEFERRED;
     }
 
@@ -742,10 +742,10 @@ QPTPool_enqueue_dst_t QPTPool_enqueue_here(QPTPool_t *ctx, const size_t id, QPTP
 
     pthread_mutex_lock(&data->mutex);
     if (queue == QPTPool_enqueue_WAIT) {
-        sll_push(&data->waiting, qi);
+        rbq_push(&data->waiting, qi);
     }
     else if (queue == QPTPool_enqueue_DEFERRED) {
-        sll_push(&data->deferred, qi);
+        rbq_push(&data->deferred, qi);
     }
 
     pthread_mutex_lock(&ctx->mutex);
@@ -854,10 +854,10 @@ void QPTPool_destroy(QPTPool_t *ctx) {
          * enqueuing work without starting the worker threads is allowed,
          * so free() is called to clear out any unprocessed work items
          */
-        sll_destroy(&data->deferred, free);
-        sll_destroy(&data->waiting, free);
+        rbq_exit(&data->deferred);
+        rbq_exit(&data->waiting);
         pthread_mutex_destroy(&data->claimed_mutex);
-        sll_destroy(&data->claimed, free);
+        rbq_exit(&data->claimed);
     }
 
     pthread_cond_destroy(&ctx->cv);
