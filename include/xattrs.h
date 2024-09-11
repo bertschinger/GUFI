@@ -164,6 +164,7 @@ void xattrs_cleanup(struct xattrs *xattrs);
 
 /* filesystem xattr interactions */
 int xattrs_get(const char *path, struct xattrs *xattrs);
+int xattrs_get_fd(int parent_fd, const char *basename, const char *path, struct xattrs *xattrs);
 ssize_t xattr_get_names(const struct xattrs *xattrs, char *buf, size_t buf_len, const char delim);
 
 /* GUFI trace functions */

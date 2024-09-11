@@ -527,12 +527,14 @@ int descend(QPTPool_t *ctx, const size_t id, void *args,
             ctrs.nondirs++;
 
             if (processnondir) {
+                child_ed.parent_fd = d_fd;
+
                 if (in->process_xattrs) {
                     xattrs_setup(&child_ed.xattrs);
-                    xattrs_get(child.name, &child_ed.xattrs);
+                    char *basename = child.name + child.name_len - child.basename_len;
+                    xattrs_get_fd(child_ed.parent_fd, basename, child.name, &child_ed.xattrs);
                 }
 
-                child_ed.parent_fd = d_fd;
                 processnondir(&child, &child_ed, nondir_args);
                 ctrs.nondirs_processed++;
 

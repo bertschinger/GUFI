@@ -63,8 +63,12 @@ OF SUCH DAMAGE.
 
 
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "utils.h"
 #include "xattrs.h"
@@ -162,15 +166,40 @@ void xattrs_cleanup(struct xattrs *xattrs) {
 /* ************************************************** */
 /* filesystem xattr interactions */
 
-/* caller should zero xattrs since this function isn't always called on a struct xattrs */
 int xattrs_get(const char *path, struct xattrs *xattrs) {
+    return xattrs_get_fd(-1, "", path, xattrs);
+}
+
+/*
+ * set parent_fd = -1 to not use...
+ *
+ * caller should zero xattrs since this function isn't always called on a struct xattrs
+ */
+int xattrs_get_fd(int parent_fd, const char *basename, const char *path, struct xattrs *xattrs) {
     /* Not checking pointers */
 
+    int fd = -1;
+    if (parent_fd >= 0) {
+        fd = openat(parent_fd, basename, O_RDONLY|O_NOFOLLOW);
+        /*
+         * Intentionally igoring errors, as fd is checked for validity before use
+         * and some failures are expected (i.e., ELOOP).
+         */
+    }
+
     char name_list[MAXXATTR];
-    const ssize_t name_list_len = LISTXATTR(path, name_list, sizeof(name_list));
+    ssize_t name_list_len;
+
+    if (fd >= 0) {
+        name_list_len = flistxattr(fd, name_list, sizeof(name_list));
+    } else {
+        name_list_len = LISTXATTR(path, name_list, sizeof(name_list));
+    }
+
     if (name_list_len < 0) {
         const int err = errno;
         fprintf(stderr, "Error: Could not list xattrs for %s: %s (%d)\n", path, strerror(err), err);
+        close(fd); // XXX: make this a real error path
         return -1;
     }
 
@@ -205,7 +234,12 @@ int xattrs_get(const char *path, struct xattrs *xattrs) {
             }
 
             xattr->name_len = SNFORMAT_S(xattr->name, sizeof(xattr->name), 1, name, name_len);
-            const ssize_t value_len = GETXATTR(path, xattr->name, xattr->value, sizeof(xattr->value));
+            ssize_t value_len;
+            if (fd >= 0) {
+                value_len = fgetxattr(fd, xattr->name, xattr->value, sizeof(xattr->value));
+            } else {
+                value_len = GETXATTR(path, xattr->name, xattr->value, sizeof(xattr->value));
+            }
 
             /* man page says positive value or -1 */
             if (value_len > 0) {
@@ -221,6 +255,9 @@ int xattrs_get(const char *path, struct xattrs *xattrs) {
             }
         }
     }
+
+    if (fd >= 0)
+        close(fd);
 
     return xattrs->count;
 }
@@ -305,4 +342,5 @@ int xattrs_from_line(char *start, const char *end, struct xattrs *xattrs, const 
 
     return xattrs->count;
 }
+
 /* ************************************************** */
