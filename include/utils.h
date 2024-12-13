@@ -167,6 +167,8 @@ void set_metadata(const char *path, struct stat *st, struct xattrs *xattrs);
 
 void dump_memory_usage(void);
 
+void decompress_work(struct work **dst, void *src);
+
 #ifdef __cplusplus
 }
 #endif
