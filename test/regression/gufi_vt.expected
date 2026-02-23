@@ -8,12 +8,12 @@ $ (
     echo ".load gufi_vt"
     echo "SELECT minsize, maxsize, minmtime, maxmtime FROM gufi_vt_treesummary('prefix', 2) ORDER BY minsize ASC, maxsize ASC;"
 ) | sqlite3
--1|0|-1|0
 0|1048576|0|1048576
 1|5|1|5
 5|5|4|5
 11|12|11|12
 15|15|15|15
+9223372036854775807|-9223372036854775808|9223372036854775807|-9223372036854775808
 
 # Query summary
 $ (
@@ -550,6 +550,18 @@ $ (
 15|prefix/unusual#? directory ,/unusual, name?#
 1024|prefix/1KB
 1048576|prefix/1MB
+
+# Make sure all types work (have to use aggregation so that prepare doesn't treat all columns as NULL types)
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", I="CREATE TABLE intermediate(fullpath TEXT, size INT64, size_f REAL, big_int INTEGER, name_blob BLOB);", S="INSERT INTO intermediate SELECT rpath(sname, sroll) AS fullpath, size, CAST(size AS REAL), 1024 * 1024 * 1024 * 1024, CAST(rpath(sname, sroll) AS BLOB) FROM vrsummary;", K="CREATE TABLE aggregate(fullpath TEXT, size INT64, size_f REAL, big_int INTEGER, name_blob BLOB);", J="INSERT INTO aggregate SELECT * FROM intermediate;", G="SELECT * from aggregate;");SELECT * FROM gufi ORDER BY fullpath ASC;"
+) | sqlite3
+prefix|17|17.0|1099511627776|prefix
+prefix/directory|7|7.0|1099511627776|prefix/directory
+prefix/directory/subdirectory|6|6.0|1099511627776|prefix/directory/subdirectory
+prefix/empty_directory|8|8.0|1099511627776|prefix/empty_directory
+prefix/leaf_directory|13|13.0|1099511627776|prefix/leaf_directory
+prefix/unusual#? directory ,|16|16.0|1099511627776|prefix/unusual#? directory ,
 
 # ######################################
 # errors

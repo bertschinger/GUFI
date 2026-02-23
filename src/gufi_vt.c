@@ -63,6 +63,7 @@ OF SUCH DAMAGE.
 
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1385,9 +1386,9 @@ static int gufi_vtColumn(sqlite3_vtab_cursor *cur,
                 const char orig = col[len];
                 ((char *)col)[len] = '\0';
 
-                int value = 0;
-                if (sscanf(col, "%d", &value) == 1) {
-                    sqlite3_result_int(ctx, value);
+                int64_t value = 0;
+                if (sscanf(col, "%" PRId64, &value) == 1) {
+                    sqlite3_result_int64(ctx, value);
                 }
                 else {
                     sqlite3_result_text(ctx, col, len, SQLITE_TRANSIENT);

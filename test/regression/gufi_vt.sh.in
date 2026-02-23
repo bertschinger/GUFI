@@ -251,6 +251,13 @@ query=$(
 )
 query_vt "${query}"
 
+echo "# Make sure all types work (have to use aggregation so that prepare doesn't treat all columns as NULL types)"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", I=\"CREATE TABLE intermediate(fullpath TEXT, size INT64, size_f REAL, big_int INTEGER, name_blob BLOB);\", S=\"INSERT INTO intermediate SELECT rpath(sname, sroll) AS fullpath, size, CAST(size AS REAL), 1024 * 1024 * 1024 * 1024, CAST(rpath(sname, sroll) AS BLOB) FROM vrsummary;\", K=\"CREATE TABLE aggregate(fullpath TEXT, size INT64, size_f REAL, big_int INTEGER, name_blob BLOB);\", J=\"INSERT INTO aggregate SELECT * FROM intermediate;\", G=\"SELECT * from aggregate;\");"
+    echo -n "SELECT * FROM gufi ORDER BY fullpath ASC;"
+)
+query_vt "${query}"
+
 echo "# ######################################"
 echo "# errors"
 

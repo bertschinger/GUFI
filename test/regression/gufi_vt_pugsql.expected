@@ -148,12 +148,12 @@ $ cat queries/treesummary.sql
 SELECT minsize, maxsize, minmtime, maxmtime FROM gufi_vt_treesummary('search/prefix', 2) ORDER BY minsize ASC, maxsize ASC;
 
 $ pugsql "queries" "treesummary"
-[('maxmtime', 0), ('maxsize', 0), ('minmtime', -1), ('minsize', -1)]
 [('maxmtime', 1048576), ('maxsize', 1048576), ('minmtime', 0), ('minsize', 0)]
 [('maxmtime', 5), ('maxsize', 5), ('minmtime', 1), ('minsize', 1)]
 [('maxmtime', 5), ('maxsize', 5), ('minmtime', 4), ('minsize', 5)]
 [('maxmtime', 12), ('maxsize', 12), ('minmtime', 11), ('minsize', 11)]
 [('maxmtime', 15), ('maxsize', 15), ('minmtime', 15), ('minsize', 15)]
+[('maxmtime', -9223372036854775808), ('maxsize', -9223372036854775808), ('minmtime', 9223372036854775807), ('minsize', 9223372036854775807)]
 
 ------------------------------------------------
 
