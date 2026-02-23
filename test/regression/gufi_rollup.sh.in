@@ -260,6 +260,23 @@ rm -rf "${SEARCH}"
     run_sort "${GUFI_QUERY} -d \"${DELIM}\" --query-xattrs -S \"SELECT path(), rpath(sname, sroll), isroot, rollupscore, xattr_name, xattr_value FROM vrxsummary;\" \"${INDEXROOT}/directory/subdirectory\""
 }
 
+rm -rf "${SEARCH}"
+
+"${GUFI_DIR2INDEX}" --index-xattrs "${SRCDIR}" "${SEARCH}" 2>&1
+
+# db.db disappeared from a directory
+{
+    echo "# Remove ${INDEXROOT}/directory/db.db"
+    run_no_sort "rm ${INDEXROOT}/directory/db.db"
+
+    echo "# Rollup succeeds except at ${INDEXROOT}/directory"
+    echo "# Two error messages: one while processing directory, one while processing parent"
+    run_no_sort "${GUFI_ROLLUP} \"${SEARCH}\" > /dev/null"
+
+    echo "# ${INDEXROOT}/directory wasn't rolled up, so have to traverse entire tree"
+    run_sort "${GUFI_QUERY} -d \"${DELIM}\" --query-xattrs -S \"SELECT path(), rpath(sname, sroll), isroot, rollupscore, xattr_name, xattr_value FROM vrxsummary;\" \"${INDEXROOT}\""
+}
+
 echo "# bad thread count"
 run_no_sort "${GUFI_ROLLUP} -n 18446744073709551615 \"${SEARCH}\""
 ) | remove_indexing_time | replace | tee "${OUTPUT}"

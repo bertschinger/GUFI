@@ -789,9 +789,7 @@ TEST(addqueryfuncs_with_context, path) {
     const char dirname[MAXPATH] = "dirname";
 
     struct work *work = new_work_with_name("index_root", 10, dirname, strlen(dirname));
-    work->orig_root = REFSTR("index_root", 10);
     work->root_parent = REFSTR("", 0);
-    work->root_basename_len = work->orig_root.len;
     work->basename_len = strlen(dirname);
 
     sqlite3 *db = nullptr;
@@ -805,9 +803,36 @@ TEST(addqueryfuncs_with_context, path) {
 
     char buf[MAXPATH] = {};
     char *output = buf;
-    EXPECT_EQ(sqlite3_exec(db, "SELECT path();", copy_columns_callback, &output, nullptr), SQLITE_OK);
 
-    EXPECT_STREQ(output, work->name);
+    // good orig_root
+    {
+        work->orig_root = REFSTR("index_root", 10);
+        work->root_basename_len = work->orig_root.len;
+
+        EXPECT_EQ(sqlite3_exec(db, "SELECT path();", copy_columns_callback, &output, nullptr), SQLITE_OK);
+        EXPECT_STREQ(output, work->name);
+    }
+
+    // empty orig_root
+    {
+        work->orig_root = REFSTR("", 0);
+        work->root_basename_len = work->orig_root.len;
+
+        EXPECT_EQ(sqlite3_exec(db, "SELECT path();", copy_columns_callback, &output, nullptr), SQLITE_OK);
+        EXPECT_EQ(strncmp(output, work->name, work->basename_len), 0);
+
+        work->orig_root = REFSTR(nullptr, 1);
+        work->root_basename_len = work->orig_root.len;
+
+        EXPECT_EQ(sqlite3_exec(db, "SELECT path();", copy_columns_callback, &output, nullptr), SQLITE_OK);
+        EXPECT_EQ(strncmp(output, work->name, work->basename_len), 0);
+
+        work->orig_root = REFSTR(nullptr, 0);
+        work->root_basename_len = work->orig_root.len;
+
+        EXPECT_EQ(sqlite3_exec(db, "SELECT path();", copy_columns_callback, &output, nullptr), SQLITE_OK);
+        EXPECT_EQ(strncmp(output, work->name, work->basename_len), 0);
+    }
 
     sqlite3_close(db);
     free(work);

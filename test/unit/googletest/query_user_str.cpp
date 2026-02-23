@@ -174,3 +174,29 @@ TEST(query_user_str, odd) {
     trie_free(user_strs);
     cleanup_replacements(&fmts);
 }
+
+TEST(replace_user_str, enomem) {
+    str_t sql = REFSTR(FORMAT, sizeof(FORMAT) - 1); // ends on non-format
+
+    /* insert some user strings */
+    trie_t *user_strs = trie_alloc();
+    str_t A = REFSTR("a", 1);
+    trie_insert(user_strs, "A", 1, &A, nullptr);
+    str_t BC = REFSTR("bc", 2);
+    trie_insert(user_strs, "BC", 2, &BC, nullptr);
+    str_t DEF = REFSTR("def", 3);
+    trie_insert(user_strs, "DEF", 3, &DEF, nullptr);
+
+    ASSERT_EQ(trie_search(user_strs, "A",   1, nullptr), 1);
+    ASSERT_EQ(trie_search(user_strs, "BC",  2, nullptr), 1);
+    ASSERT_EQ(trie_search(user_strs, "DEF", 3, nullptr), 1);
+
+    std::size_t src_start = 0;
+    usk_t pos = {1, 3};
+    str_t replaced = {nullptr, ((std::size_t) -1) / 4, nullptr}; // reallocating this should not succeed
+    std::size_t allocd = 0;
+
+    EXPECT_EQ(replace_user_str(&sql, &src_start, &pos, &replaced, &allocd, user_strs), -1);
+
+    trie_free(user_strs);
+}

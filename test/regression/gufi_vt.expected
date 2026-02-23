@@ -18,7 +18,7 @@ $ (
 # Query summary
 $ (
     echo ".load gufi_vt"
-    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_summary('prefix', 2) ORDER BY name ASC, size ASC;"
+    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_summary('prefix') ORDER BY name ASC, size ASC;"
 ) | sqlite3
 directory|7|drwxrwxr-x|Thu Jan 01 00:00:07 UTC 1970
 empty_directory|8|drwxrwxr-x|Thu Jan 01 00:00:08 UTC 1970
@@ -30,7 +30,7 @@ unusual#? directory ,|16|drwxrwxr-x|Thu Jan 01 00:00:16 UTC 1970
 # Query entries
 $ (
     echo ".load gufi_vt"
-    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_entries('prefix', 2) ORDER BY name ASC, size ASC;"
+    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_entries('prefix') ORDER BY name ASC, size ASC;"
 ) | sqlite3
 .hidden|10|-rw-rw-r--|Thu Jan 01 00:00:10 UTC 1970
 1KB|1024|-rw-rw-r--|Thu Jan 01 00:17:04 UTC 1970
@@ -50,7 +50,7 @@ writable|3|-rw-rw-rw-|Thu Jan 01 00:00:03 UTC 1970
 # Query pentries
 $ (
     echo ".load gufi_vt"
-    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_pentries('prefix', 2) ORDER BY name ASC, size ASC;"
+    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_pentries('prefix') ORDER BY name ASC, size ASC;"
 ) | sqlite3
 .hidden|10|-rw-rw-r--|Thu Jan 01 00:00:10 UTC 1970
 1KB|1024|-rw-rw-r--|Thu Jan 01 00:17:04 UTC 1970
@@ -70,7 +70,7 @@ writable|3|-rw-rw-rw-|Thu Jan 01 00:00:03 UTC 1970
 # Query vrsummary
 $ (
     echo ".load gufi_vt"
-    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_vrsummary('prefix', 2) ORDER BY name ASC, size ASC;"
+    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_vrsummary('prefix') ORDER BY name ASC, size ASC;"
 ) | sqlite3
 directory|7|drwxrwxr-x|Thu Jan 01 00:00:07 UTC 1970
 empty_directory|8|drwxrwxr-x|Thu Jan 01 00:00:08 UTC 1970
@@ -82,7 +82,7 @@ unusual#? directory ,|16|drwxrwxr-x|Thu Jan 01 00:00:16 UTC 1970
 # Query vrpentries
 $ (
     echo ".load gufi_vt"
-    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_vrpentries('prefix', 2) ORDER BY name ASC, size ASC;"
+    echo "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_vrpentries('prefix') ORDER BY name ASC, size ASC;"
 ) | sqlite3
 .hidden|10|-rw-rw-r--|Thu Jan 01 00:00:10 UTC 1970
 1KB|1024|-rw-rw-r--|Thu Jan 01 00:17:04 UTC 1970
@@ -158,10 +158,10 @@ repeat_name
 unusual, name?#
 writable
 
-# NULL thread count (not an error)
+# NULL arguments (not an error)
 $ (
     echo ".load gufi_vt"
-    echo "SELECT name FROM gufi_vt_pentries('prefix', NULL) ORDER BY name ASC, size ASC;"
+    echo "SELECT name FROM gufi_vt_pentries('prefix', NULL, NULL, NULL, NULL, NULL, NULL, NULL) ORDER BY name ASC, size ASC;"
 ) | sqlite3
 .hidden
 1KB
@@ -292,6 +292,26 @@ $ (
 1024|prefix/1KB
 1048576|prefix/1MB
 
+# Run IF with remote
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", I="SELECT NULL;", E="SELECT rpath(sname, sroll, name) AS fullpath, size FROM vrpentries;", F="SELECT NULL;", remote_cmd="ssh", remote_arg="remote");SELECT size, fullpath FROM gufi ORDER BY size ASC, fullpath ASC;"
+) | sqlite3
+0|prefix/old_file
+1|prefix/directory/executable
+2|prefix/directory/readonly
+3|prefix/directory/writable
+4|prefix/directory/subdirectory/directory_symlink
+5|prefix/directory/subdirectory/repeat_name
+9|prefix/file_symlink
+10|prefix/.hidden
+11|prefix/leaf_directory/leaf_file1
+12|prefix/leaf_directory/leaf_file2
+14|prefix/repeat_name
+15|prefix/unusual#? directory ,/unusual, name?#
+1024|prefix/1KB
+1048576|prefix/1MB
+
 # SELECT TSE
 $ (
     echo ".load gufi_vt"
@@ -316,6 +336,26 @@ $ (
 $ (
     echo ".load gufi_vt"
     echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", a=2, T="SELECT NULL WHERE 0;", S="SELECT NULL WHERE 0;", E="SELECT rpath(sname, sroll, name) AS fullpath, size FROM vrpentries;");SELECT size, fullpath FROM gufi WHERE size IS NOT NULL ORDER BY size ASC, fullpath ASC;"
+) | sqlite3
+0|prefix/old_file
+1|prefix/directory/executable
+2|prefix/directory/readonly
+3|prefix/directory/writable
+4|prefix/directory/subdirectory/directory_symlink
+5|prefix/directory/subdirectory/repeat_name
+9|prefix/file_symlink
+10|prefix/.hidden
+11|prefix/leaf_directory/leaf_file1
+12|prefix/leaf_directory/leaf_file2
+14|prefix/repeat_name
+15|prefix/unusual#? directory ,/unusual, name?#
+1024|prefix/1KB
+1048576|prefix/1MB
+
+# SELECT TSE with -a 2 with remote
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", a=2, T="SELECT NULL WHERE 0;", S="SELECT NULL WHERE 0;", E="SELECT rpath(sname, sroll, name) AS fullpath, size FROM vrpentries;", remote_cmd="ssh", remote_arg="remote");SELECT size, fullpath FROM gufi WHERE size IS NOT NULL ORDER BY size ASC, fullpath ASC;"
 ) | sqlite3
 0|prefix/old_file
 1|prefix/directory/executable
@@ -562,6 +602,140 @@ prefix/directory/subdirectory|6|6.0|1099511627776|prefix/directory/subdirectory
 prefix/empty_directory|8|8.0|1099511627776|prefix/empty_directory
 prefix/leaf_directory|13|13.0|1099511627776|prefix/leaf_directory
 prefix/unusual#? directory ,|16|16.0|1099511627776|prefix/unusual#? directory ,
+
+# Force bad integer values
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", I="CREATE TABLE intermediate(i INTEGER);", S="INSERT INTO intermediate SELECT rpath(sname, sroll) FROM vrsummary;", K="CREATE TABLE aggregate(i INTEGER);", J="INSERT INTO aggregate SELECT * FROM intermediate;", G="SELECT * from aggregate;");SELECT * FROM gufi ORDER BY i ASC;"
+) | sqlite3
+prefix
+prefix/directory
+prefix/directory/subdirectory
+prefix/empty_directory
+prefix/leaf_directory
+prefix/unusual#? directory ,
+
+# Force bad float values
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", I="CREATE TABLE intermediate(i FLOAT);", S="INSERT INTO intermediate SELECT rpath(sname, sroll) FROM vrsummary;", K="CREATE TABLE aggregate(i FLOAT);", J="INSERT INTO aggregate SELECT * FROM intermediate;", G="SELECT * from aggregate;");SELECT * FROM gufi ORDER BY i ASC;"
+) | sqlite3
+prefix
+prefix/directory
+prefix/directory/subdirectory
+prefix/empty_directory
+prefix/leaf_directory
+prefix/unusual#? directory ,
+
+# dir_match_uid/gid without values
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", dir_match_uid=, dir_match_gid=, E="SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;", verbose=1);SELECT level, fullpath FROM gufi ORDER BY level ASC, fullpath ASC;"
+) | sqlite3
+Each line is one argv[i]:
+    gufi_query \
+        --print-tlv \
+        -x \
+        --threads \
+        1 \
+        --dir-match-uid \
+        --dir-match-gid \
+        -E \
+        SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries; \
+        prefix
+0|prefix/.hidden
+0|prefix/1KB
+0|prefix/1MB
+0|prefix/file_symlink
+0|prefix/old_file
+0|prefix/repeat_name
+1|prefix/directory/executable
+1|prefix/directory/readonly
+1|prefix/directory/writable
+1|prefix/leaf_directory/leaf_file1
+1|prefix/leaf_directory/leaf_file2
+1|prefix/unusual#? directory ,/unusual, name?#
+2|prefix/directory/subdirectory/directory_symlink
+2|prefix/directory/subdirectory/repeat_name
+
+# dir_match_uid/gid without values + remote
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", dir_match_uid=, dir_match_gid=, E="SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;", verbose=1, remote_cmd="ssh", remote_arg="remote");SELECT level, fullpath FROM gufi ORDER BY level ASC, fullpath ASC;"
+) | sqlite3
+Each line is one argv[i]:
+    ssh \
+        remote \
+        gufi_query --print-tlv -x --threads 1 --dir-match-uid --dir-match-gid -E "SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;" prefix
+0|prefix/.hidden
+0|prefix/1KB
+0|prefix/1MB
+0|prefix/file_symlink
+0|prefix/old_file
+0|prefix/repeat_name
+1|prefix/directory/executable
+1|prefix/directory/readonly
+1|prefix/directory/writable
+1|prefix/leaf_directory/leaf_file1
+1|prefix/leaf_directory/leaf_file2
+1|prefix/unusual#? directory ,/unusual, name?#
+2|prefix/directory/subdirectory/directory_symlink
+2|prefix/directory/subdirectory/repeat_name
+
+# dir_match_uid/gid with values
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", dir_match_uid=euid, dir_match_gid=egid, E="SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;", verbose=1);SELECT level, fullpath FROM gufi ORDER BY level ASC, fullpath ASC;"
+) | sqlite3
+Each line is one argv[i]:
+    gufi_query \
+        --print-tlv \
+        -x \
+        --threads \
+        1 \
+        --dir-match-uid=euid \
+        --dir-match-gid=egid \
+        -E \
+        SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries; \
+        prefix
+0|prefix/.hidden
+0|prefix/1KB
+0|prefix/1MB
+0|prefix/file_symlink
+0|prefix/old_file
+0|prefix/repeat_name
+1|prefix/directory/executable
+1|prefix/directory/readonly
+1|prefix/directory/writable
+1|prefix/leaf_directory/leaf_file1
+1|prefix/leaf_directory/leaf_file2
+1|prefix/unusual#? directory ,/unusual, name?#
+2|prefix/directory/subdirectory/directory_symlink
+2|prefix/directory/subdirectory/repeat_name
+
+# dir_match_uid/gid with values + remote
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", dir_match_uid=euid, dir_match_gid=egid, E="SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;", verbose=1, remote_cmd="ssh", remote_arg="remote");SELECT level, fullpath FROM gufi ORDER BY level ASC, fullpath ASC;"
+) | sqlite3
+Each line is one argv[i]:
+    ssh \
+        remote \
+        gufi_query --print-tlv -x --threads 1 --dir-match-uid=euid --dir-match-gid=egid -E "SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;" prefix
+0|prefix/.hidden
+0|prefix/1KB
+0|prefix/1MB
+0|prefix/file_symlink
+0|prefix/old_file
+0|prefix/repeat_name
+1|prefix/directory/executable
+1|prefix/directory/readonly
+1|prefix/directory/writable
+1|prefix/leaf_directory/leaf_file1
+1|prefix/leaf_directory/leaf_file2
+1|prefix/unusual#? directory ,/unusual, name?#
+2|prefix/directory/subdirectory/directory_symlink
+2|prefix/directory/subdirectory/repeat_name
 
 # ######################################
 # errors

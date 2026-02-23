@@ -174,10 +174,8 @@ static int gen_types(struct input *in) {
             setup_xattrs_views(in, db, &work, &count);
         }
 
-        if ((addqueryfuncs(db) != 0) ||
-            (addqueryfuncs_with_context(db, &ctx) != 0)) {
-            goto error;
-        }
+        addqueryfuncs(db);
+        addqueryfuncs_with_context(db, &ctx);
 
         if (in->sql.tsum.len) {
             if (create_table_wrapper(SQLITE_MEMORY, db, TREESUMMARY, TREESUMMARY_CREATE) != SQLITE_OK) {

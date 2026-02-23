@@ -149,6 +149,13 @@ query=$(
 )
 query_vt "${query}"
 
+echo "# Run IF with remote"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", I=\"SELECT NULL;\", E=\"SELECT rpath(sname, sroll, name) AS fullpath, size FROM vrpentries;\", F=\"SELECT NULL;\", remote_cmd=\"${SSH_FAKE}\", remote_arg=\"remote\");"
+    echo -n "SELECT size, fullpath FROM gufi ORDER BY size ASC, fullpath ASC;"
+)
+query_vt "${query}"
+
 echo "# SELECT TSE"
 query=$(
     echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", T=\"SELECT NULL;\", S=\"SELECT NULL;\", E=\"SELECT rpath(sname, sroll, name) AS fullpath, size FROM vrpentries;\");"
@@ -159,6 +166,13 @@ query_vt "${query}"
 echo "# SELECT TSE with -a 2"
 query=$(
     echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", a=2, T=\"SELECT NULL WHERE 0;\", S=\"SELECT NULL WHERE 0;\", E=\"SELECT rpath(sname, sroll, name) AS fullpath, size FROM vrpentries;\");"
+    echo -n "SELECT size, fullpath FROM gufi WHERE size IS NOT NULL ORDER BY size ASC, fullpath ASC;"
+)
+query_vt "${query}"
+
+echo "# SELECT TSE with -a 2 with remote"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", a=2, T=\"SELECT NULL WHERE 0;\", S=\"SELECT NULL WHERE 0;\", E=\"SELECT rpath(sname, sroll, name) AS fullpath, size FROM vrpentries;\", remote_cmd=\"${SSH_FAKE}\", remote_arg=\"remote\");"
     echo -n "SELECT size, fullpath FROM gufi WHERE size IS NOT NULL ORDER BY size ASC, fullpath ASC;"
 )
 query_vt "${query}"
@@ -257,6 +271,48 @@ query=$(
     echo -n "SELECT * FROM gufi ORDER BY fullpath ASC;"
 )
 query_vt "${query}"
+
+echo "# Force bad integer values"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", I=\"CREATE TABLE intermediate(i INTEGER);\", S=\"INSERT INTO intermediate SELECT rpath(sname, sroll) FROM vrsummary;\", K=\"CREATE TABLE aggregate(i INTEGER);\", J=\"INSERT INTO aggregate SELECT * FROM intermediate;\", G=\"SELECT * from aggregate;\");"
+    echo -n "SELECT * FROM gufi ORDER BY i ASC;"
+)
+query_vt "${query}"
+
+echo "# Force bad float values"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", I=\"CREATE TABLE intermediate(i FLOAT);\", S=\"INSERT INTO intermediate SELECT rpath(sname, sroll) FROM vrsummary;\", K=\"CREATE TABLE aggregate(i FLOAT);\", J=\"INSERT INTO aggregate SELECT * FROM intermediate;\", G=\"SELECT * from aggregate;\");"
+    echo -n "SELECT * FROM gufi ORDER BY i ASC;"
+)
+query_vt "${query}"
+
+echo "# dir_match_uid/gid without values"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", dir_match_uid=, dir_match_gid=, E=\"SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;\", verbose=1);"
+    echo -n "SELECT level, fullpath FROM gufi ORDER BY level ASC, fullpath ASC;"
+)
+query_vt "${query}"
+
+echo "# dir_match_uid/gid without values + remote"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", dir_match_uid=, dir_match_gid=, E=\"SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;\", verbose=1, remote_cmd=\"${SSH_FAKE}\", remote_arg=\"remote\");"
+    echo -n "SELECT level, fullpath FROM gufi ORDER BY level ASC, fullpath ASC;"
+)
+query_vt "${query}"
+
+echo "# dir_match_uid/gid with values"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", dir_match_uid=${USER_ID}, dir_match_gid=${GROUP_ID}, E=\"SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;\", verbose=1);"
+    echo -n "SELECT level, fullpath FROM gufi ORDER BY level ASC, fullpath ASC;"
+)
+query_vt "${query}" | @SED@ "s%uid=${USER_ID}%uid=euid%g; s%gid=${GROUP_ID}%gid=egid%g;"
+
+echo "# dir_match_uid/gid with values + remote"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", dir_match_uid=${USER_ID}, dir_match_gid=${GROUP_ID}, E=\"SELECT rpath(sname, sroll, name) AS fullpath, level() AS level FROM vrpentries;\", verbose=1, remote_cmd=\"${SSH_FAKE}\", remote_arg=\"remote\");"
+    echo -n "SELECT level, fullpath FROM gufi ORDER BY level ASC, fullpath ASC;"
+)
+query_vt "${query}" | @SED@ "s%uid=${USER_ID}%uid=euid%g; s%gid=${GROUP_ID}%gid=egid%g;"
 
 echo "# ######################################"
 echo "# errors"

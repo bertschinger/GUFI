@@ -74,7 +74,7 @@ run_tests() {
     for name in summary entries pentries vrsummary vrpentries
     do
         echo "# Query ${name}"
-        "${func}" "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_${name}('${INDEXROOT}', ${THREADS}) ORDER BY name ASC, size ASC;"
+        "${func}" "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_${name}('${INDEXROOT}') ORDER BY name ASC, size ASC;"
     done
 
     echo "# Query with WHERE size < 10"
@@ -92,6 +92,6 @@ run_tests() {
     echo "# Missing thread count (not an error)"
     "${func}" "SELECT name FROM gufi_vt_pentries('${INDEXROOT}') ORDER BY name ASC, size ASC;"
 
-    echo "# NULL thread count (not an error)"
-    "${func}" "SELECT name FROM gufi_vt_pentries('${INDEXROOT}', NULL) ORDER BY name ASC, size ASC;"
+    echo "# NULL arguments (not an error)"
+    "${func}" "SELECT name FROM gufi_vt_pentries('${INDEXROOT}', NULL, NULL, NULL, NULL, NULL, NULL, NULL) ORDER BY name ASC, size ASC;"
 }

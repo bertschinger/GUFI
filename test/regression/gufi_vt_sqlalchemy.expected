@@ -11,7 +11,7 @@ $ gufi_vt_sqlalchemy "SELECT minsize, maxsize, minmtime, maxmtime FROM gufi_vt_t
 9223372036854775807 -9223372036854775808 9223372036854775807 -9223372036854775808
 
 # Query summary
-$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_summary('prefix', 2) ORDER BY name ASC, size ASC;"
+$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_summary('prefix') ORDER BY name ASC, size ASC;"
 directory 7 drwxrwxr-x Thu Jan 01 00:00:07 UTC 1970
 empty_directory 8 drwxrwxr-x Thu Jan 01 00:00:08 UTC 1970
 leaf_directory 13 drwxrwxr-x Thu Jan 01 00:00:13 UTC 1970
@@ -20,7 +20,7 @@ subdirectory 6 drwxrwxr-x Thu Jan 01 00:00:06 UTC 1970
 unusual#? directory , 16 drwxrwxr-x Thu Jan 01 00:00:16 UTC 1970
 
 # Query entries
-$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_entries('prefix', 2) ORDER BY name ASC, size ASC;"
+$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_entries('prefix') ORDER BY name ASC, size ASC;"
 .hidden 10 -rw-rw-r-- Thu Jan 01 00:00:10 UTC 1970
 1KB 1024 -rw-rw-r-- Thu Jan 01 00:17:04 UTC 1970
 1MB 1048576 -rw-rw-r-- Tue Jan 13 03:16:16 UTC 1970
@@ -37,7 +37,7 @@ unusual, name?# 15 -rw-rw-r-- Thu Jan 01 00:00:15 UTC 1970
 writable 3 -rw-rw-rw- Thu Jan 01 00:00:03 UTC 1970
 
 # Query pentries
-$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_pentries('prefix', 2) ORDER BY name ASC, size ASC;"
+$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_pentries('prefix') ORDER BY name ASC, size ASC;"
 .hidden 10 -rw-rw-r-- Thu Jan 01 00:00:10 UTC 1970
 1KB 1024 -rw-rw-r-- Thu Jan 01 00:17:04 UTC 1970
 1MB 1048576 -rw-rw-r-- Tue Jan 13 03:16:16 UTC 1970
@@ -54,7 +54,7 @@ unusual, name?# 15 -rw-rw-r-- Thu Jan 01 00:00:15 UTC 1970
 writable 3 -rw-rw-rw- Thu Jan 01 00:00:03 UTC 1970
 
 # Query vrsummary
-$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_vrsummary('prefix', 2) ORDER BY name ASC, size ASC;"
+$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_vrsummary('prefix') ORDER BY name ASC, size ASC;"
 directory 7 drwxrwxr-x Thu Jan 01 00:00:07 UTC 1970
 empty_directory 8 drwxrwxr-x Thu Jan 01 00:00:08 UTC 1970
 leaf_directory 13 drwxrwxr-x Thu Jan 01 00:00:13 UTC 1970
@@ -63,7 +63,7 @@ subdirectory 6 drwxrwxr-x Thu Jan 01 00:00:06 UTC 1970
 unusual#? directory , 16 drwxrwxr-x Thu Jan 01 00:00:16 UTC 1970
 
 # Query vrpentries
-$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_vrpentries('prefix', 2) ORDER BY name ASC, size ASC;"
+$ gufi_vt_sqlalchemy "SELECT name, size, modetotxt(mode), strftime('%a %b %d %H:%M:%S UTC %Y', mtime) FROM gufi_vt_vrpentries('prefix') ORDER BY name ASC, size ASC;"
 .hidden 10 -rw-rw-r-- Thu Jan 01 00:00:10 UTC 1970
 1KB 1024 -rw-rw-r-- Thu Jan 01 00:17:04 UTC 1970
 1MB 1048576 -rw-rw-r-- Tue Jan 13 03:16:16 UTC 1970
@@ -123,8 +123,8 @@ repeat_name
 unusual, name?#
 writable
 
-# NULL thread count (not an error)
-$ gufi_vt_sqlalchemy "SELECT name FROM gufi_vt_pentries('prefix', NULL) ORDER BY name ASC, size ASC;"
+# NULL arguments (not an error)
+$ gufi_vt_sqlalchemy "SELECT name FROM gufi_vt_pentries('prefix', NULL, NULL, NULL, NULL, NULL, NULL, NULL) ORDER BY name ASC, size ASC;"
 .hidden
 1KB
 1MB

@@ -148,10 +148,7 @@ int PoolArgs_init(PoolArgs_t *pa, struct input *in, pthread_mutex_t *global_mute
             break;
         }
 
-        if (addqueryfuncs(ta->outdb) != 0) {
-            fprintf(stderr, "Error: Could not add functions to sqlite\n");
-            break;
-        }
+        addqueryfuncs(ta->outdb);
 
         /* user string storage */
         ta->user_strs = trie_alloc();

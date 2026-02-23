@@ -723,8 +723,8 @@ gufi_vt_xConnect(VRPENTRIES,  VRP, 0, 0, 1, 1)
  *     a                       =  <0|1|2> (see gufi_query)
  *     min_level               =  <non-negative integer>
  *     max_level               =  <non-negative integer>
- *     dir_match_uid           =  <uid>
- *     dir_match_gid           =  <gid>
+ *     dir_match_uid           =  <uid> (if just want euid, pass in no value i.e. dir_match_uid=)
+ *     dir_match_gid           =  <gid> (if just want egid, pass in no value i.e. dir_match_gid=)
  *     setup_res_col_type      = '<SQL>' (set up single temporary table to make columns available for getting result column types)
  *     I                       = '<SQL>'
  *     T                       = '<SQL>'
@@ -1291,14 +1291,16 @@ static int gufi_vtFilter(sqlite3_vtab_cursor *cur,
 
                                 if (argc > GUFI_VT_ARGS_REMOTE_ARGS) {
                                     char *remote_args = (char *) sqlite3_value_text(argv[GUFI_VT_ARGS_REMOTE_ARGS]);
-                                    char *saveptr = NULL;
-                                    char *remote_arg = strtok_r(remote_args, " ", &saveptr); /* skip multiple contiguous spaces */
-                                    while (remote_arg) {
-                                        str_t *ra = calloc(1, sizeof(*ra));
-                                        set_refstr(ra, remote_arg);
-                                        sll_push_back(&vtab->cmd.remote_args, ra);
+                                    if (remote_args) {
+                                        char *saveptr = NULL;
+                                        char *remote_arg = strtok_r(remote_args, " ", &saveptr); /* skip multiple contiguous spaces */
+                                        while (remote_arg) {
+                                            str_t *ra = calloc(1, sizeof(*ra));
+                                            set_refstr(ra, remote_arg);
+                                            sll_push_back(&vtab->cmd.remote_args, ra);
 
-                                        remote_arg = strtok_r(NULL, " ", &saveptr);
+                                            remote_arg = strtok_r(NULL, " ", &saveptr);
+                                        }
                                     }
                                 }
                             }
@@ -1394,28 +1396,28 @@ static int gufi_vtColumn(sqlite3_vtab_cursor *cur,
                     sqlite3_result_text(ctx, col, len, SQLITE_TRANSIENT);
                 }
                 ((char *)col)[len] = orig;
-                break;
             }
-        /* GUFI does not have floating point columns */
-        /* case SQLITE_FLOAT: */
-        /*     { */
-        /*         double value = 0; */
-        /*         if (sscanf(col, "%lf", &value) == 1) { */
-        /*             sqlite3_result_double(ctx, value); */
-        /*         } */
-        /*         else { */
-        /*             sqlite3_result_text(ctx, col, len, SQLITE_TRANSIENT); */
-        /*         } */
-        /*         break; */
-        /*     } */
+            break;
+        case SQLITE_FLOAT:
+            {
+                double value = 0;
+                if (sscanf(col, "%lf", &value) == 1) {
+                    sqlite3_result_double(ctx, value);
+                }
+                else {
+                    sqlite3_result_text(ctx, col, len, SQLITE_TRANSIENT);
+                }
+            }
+            break;
         case SQLITE_TEXT:
-        case SQLITE_BLOB:
             sqlite3_result_text(ctx, col, len, SQLITE_TRANSIENT);
+            break;
+        case SQLITE_BLOB:
+            sqlite3_result_blob(ctx, col, len, SQLITE_TRANSIENT);
             break;
         case SQLITE_NULL:
         default:
             sqlite3_result_text(ctx, col, len, SQLITE_TRANSIENT);
-            /* sqlite3_result_null(ctx); */
             break;
     }
 
@@ -1482,9 +1484,7 @@ int sqlite3_gufivt_init(
 
     SQLITE_EXTENSION_INIT2(pApi);
 
-    if (addqueryfuncs(db) != 0) {
-        return SQLITE_ERROR;
-    }
+    addqueryfuncs(db);
 
     /* fixed schemas - SELECT directly from these */
     create_module("gufi_vt_treesummary",   NULL,                gufi_vt_TConnect);

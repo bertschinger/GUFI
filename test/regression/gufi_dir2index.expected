@@ -357,26 +357,33 @@ prefix/unusual#? directory ,/unusual, name?#
 
 # ######################################
 
-# target is file
-$ gufi_dir2index -n 2 "prefix" "prefix/1KB"
-"prefix/1KB" Already exists!
-Destination path is not a directory "prefix/1KB"
+# no source path
+$ gufi_dir2index -n 2 "search"
+Creating GUFI tree search with 2 threads
+Error: At least one root is needed
+
+# empty source path
+$ gufi_dir2index -n 2 "" "search"
+"search" Already exists!
+Creating GUFI tree search with 2 threads
+Could not stat source directory "": No such file or directory (2)
+Total Dirs:          0
+Total Non-Dirs:      0
 
 # source path is file
 $ gufi_dir2index -n 2 "prefix/1KB" "search"
+"search" Already exists!
 Creating GUFI tree search with 2 threads
 Source path is not a directory "prefix/1KB"
 Total Dirs:          0
 Total Non-Dirs:      0
 
-# empty source path
-$ gufi_dir2index -n 2 "" "trace"
-Creating GUFI tree trace with 2 threads
-Could not stat source directory "": No such file or directory (2)
-Total Dirs:          0
-Total Non-Dirs:      0
+# destination is file
+$ gufi_dir2index -n 2 "prefix" "prefix/1KB"
+"prefix/1KB" Already exists!
+Destination path is not a directory "prefix/1KB"
 
-# desintation path contains a file in a path segment
+# destination path contains a file in a path segment
 $ gufi_dir2index -n 2 "prefix" "prefix/1KB/search"
 Could not create prefix/1KB/search
 
