@@ -562,7 +562,7 @@ static void blobop(sqlite3_context *context, int argc, sqlite3_value **argv) {
     size_t len = 0;
     size_t got = 0;
 
-    while ((got = fread(data + len, sizeof(char), alloc - len, p)) == (alloc - len)) {
+    while ((got = fread(data + len, sizeof(char), alloc - len, p)) > 0) {
         len += got;
 
         if (len == alloc) {

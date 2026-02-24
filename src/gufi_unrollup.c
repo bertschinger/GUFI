@@ -148,10 +148,7 @@ static int processdir(QPTPool_ctx_t *ctx, void *data) {
         SNPRINTF(dbname, MAXPATH, "%s/" DBNAME, work->name);
 
         db = opendb(dbname, SQLITE_OPEN_READWRITE, 0, 0, NULL, NULL);
-
-        if (!db) {
-            rc = 1;
-        }
+        rc = !db;
     }
 
     /* get roll up status set by parent */
@@ -217,8 +214,8 @@ static int processdir(QPTPool_ctx_t *ctx, void *data) {
         if (sqlite3_exec(db, ROLLUP_CLEANUP, xattrs_rollup_cleanup, &name, &err) != SQLITE_OK) {
             sqlite_print_err_and_free(err, stderr, "Could not remove roll up data from \"%s\": %s\n",
                                       work->name, err);
-            rc = 1;
         }
+        rc = !!err;
         err = NULL;
     }
 

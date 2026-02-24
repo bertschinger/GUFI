@@ -96,7 +96,8 @@ do_tests() {
     run_no_sort "${GUFI_DU} --inodes --total --summarize --human-readable ${paths[@]}"
 }
 
-run_no_sort "${GUFI_DU} --help"
+# run actual script here instead of wrapper
+run_no_sort "${BINARY_DIR}/scripts/gufi_du --help"
 
 (
 set -e

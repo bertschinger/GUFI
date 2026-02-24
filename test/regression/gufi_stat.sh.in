@@ -66,7 +66,8 @@ set -e
 
 OUTPUT="gufi_stat.out"
 
-run_no_sort "${GUFI_STAT} --help"
+# run actual script here instead of wrapper
+run_no_sort "${BINARY_DIR}/scripts/gufi_stat --help"
 
 (
 # entries in the index with a fixed size

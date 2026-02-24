@@ -272,6 +272,16 @@ $ (
 13|prefix/leaf_directory
 16|prefix/unusual#? directory ,
 
+# min_level/max_level + remote
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", S="SELECT path() AS fullpath, size FROM summary;", min_level=1, max_level=1, remote_cmd="ssh", remote_arg="remote");SELECT size, fullpath FROM gufi ORDER BY size ASC, fullpath ASC;"
+) | sqlite3
+7|prefix/directory
+8|prefix/empty_directory
+13|prefix/leaf_directory
+16|prefix/unusual#? directory ,
+
 # Run IF
 $ (
     echo ".load gufi_vt"
@@ -460,6 +470,26 @@ prefix/unusual#? directory ,/unusual, name?#||
 $ (
     echo ".load gufi_vt"
     echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", E="SELECT spath(sname, sroll, name) AS srcpath, size FROM vrpentries;", p="source/prefix");SELECT size, srcpath FROM gufi ORDER BY size ASC, srcpath ASC;"
+) | sqlite3
+0|source/prefix/old_file
+1|source/prefix/directory/executable
+2|source/prefix/directory/readonly
+3|source/prefix/directory/writable
+4|source/prefix/directory/subdirectory/directory_symlink
+5|source/prefix/directory/subdirectory/repeat_name
+9|source/prefix/file_symlink
+10|source/prefix/.hidden
+11|source/prefix/leaf_directory/leaf_file1
+12|source/prefix/leaf_directory/leaf_file2
+14|source/prefix/repeat_name
+15|source/prefix/unusual#? directory ,/unusual, name?#
+1024|source/prefix/1KB
+1048576|source/prefix/1MB
+
+# Get source paths + remote
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt("prefix", E="SELECT spath(sname, sroll, name) AS srcpath, size FROM vrpentries;", p="source/prefix", remote_cmd="ssh", remote_arg="remote");SELECT size, srcpath FROM gufi ORDER BY size ASC, srcpath ASC;"
 ) | sqlite3
 0|source/prefix/old_file
 1|source/prefix/directory/executable
@@ -951,6 +981,13 @@ $ (
     echo "SELECT name FROM gufi_vt_pentries('prefix', 2, 0, NULL, NULL, 'a') ORDER BY name ASC, size ASC;"
 ) | sqlite3
 Runtime error near line 2: Bad verbose value: 'a' (19)
+
+# Bad verbose
+$ (
+    echo ".load gufi_vt"
+    echo "CREATE VIRTUAL TABLE gufi USING gufi_vt('prefix', verbose='a');"
+) | sqlite3
+Runtime error near line 2: Bad verbose value: 'a' (21)
 
 # Bad 5 character key (only 'index' is recognized)
 $ (

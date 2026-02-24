@@ -142,6 +142,13 @@ query=$(
 )
 query_vt "${query}"
 
+echo "# min_level/max_level + remote"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", S=\"SELECT path() AS fullpath, size FROM summary;\", min_level=1, max_level=1, remote_cmd=\"${SSH_FAKE}\", remote_arg=\"remote\");"
+    echo -n "SELECT size, fullpath FROM gufi ORDER BY size ASC, fullpath ASC;"
+)
+query_vt "${query}"
+
 echo "# Run IF"
 query=$(
     echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", I=\"SELECT NULL;\", E=\"SELECT rpath(sname, sroll, name) AS fullpath, size FROM vrpentries;\", F=\"SELECT NULL;\");"
@@ -208,6 +215,13 @@ query_vt "${query}"
 echo "# Get source paths"
 query=$(
     echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", E=\"SELECT spath(sname, sroll, name) AS srcpath, size FROM vrpentries;\", p=\"source/${SRCDIR}\");"
+    echo -n "SELECT size, srcpath FROM gufi ORDER BY size ASC, srcpath ASC;"
+)
+query_vt "${query}"
+
+echo "# Get source paths + remote"
+query=$(
+    echo -n "CREATE VIRTUAL TABLE gufi USING gufi_vt(\"${INDEXROOT}\", E=\"SELECT spath(sname, sroll, name) AS srcpath, size FROM vrpentries;\", p=\"source/${SRCDIR}\", remote_cmd=\"${SSH_FAKE}\", remote_arg=\"remote\");"
     echo -n "SELECT size, srcpath FROM gufi ORDER BY size ASC, srcpath ASC;"
 )
 query_vt "${query}"
@@ -410,6 +424,9 @@ echo
 
 echo "# Bad verbose (path_list == NULL is not an error)"
 query_vt "SELECT name FROM gufi_vt_pentries('${INDEXROOT}', ${THREADS}, 0, NULL, NULL, 'a') ORDER BY name ASC, size ASC;"
+
+echo "# Bad verbose"
+query_vt "CREATE VIRTUAL TABLE gufi USING gufi_vt('${INDEXROOT}', verbose='a');"
 
 echo "# Bad 5 character key (only 'index' is recognized)"
 query_vt "CREATE VIRTUAL TABLE gufi USING gufi_vt('${INDEXROOT}', abcde='');"

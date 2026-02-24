@@ -84,7 +84,8 @@ cleanup
 
 touch -amt 197001010001 "${REFERENCE}"            # 1 minute after epoch
 
-run_no_sort "${GUFI_FIND} --help"
+# run actual script here instead of wrapper
+run_no_sort "${BINARY_DIR}/scripts/gufi_find --help"
 
 (
 run_no_sort "${GUFI_FIND} -H 2>&1 >/dev/null"

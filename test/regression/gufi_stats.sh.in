@@ -77,7 +77,8 @@ run_uidgid_size() {
     echo
 }
 
-run_no_sort "${GUFI_STATS} --help"
+# run actual script here instead of wrapper
+run_no_sort "${BINARY_DIR}/scripts/gufi_stats --help"
 run_no_sort "${GUFI_STATS} -r -c"
 
 (

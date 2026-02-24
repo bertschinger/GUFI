@@ -148,6 +148,7 @@ run_no_sort "${GUFI_UNROLLUP} --min-level 2 --path-list \"${PATH_LIST}\" \"${IND
 query
 # ###########################################
 
+run_no_sort "${GUFI_UNROLLUP} \"\""
 run_no_sort "${GUFI_UNROLLUP} \"${INDEXROOT}/db.db\""
 run_no_sort "${GUFI_UNROLLUP} \"${INDEXROOT}/badfile\""
 run_no_sort "${GUFI_UNROLLUP} -n 18446744073709551615 \"${INDEXROOT}\""

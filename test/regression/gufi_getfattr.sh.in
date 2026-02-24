@@ -219,7 +219,8 @@ do_tests() {
     run_sort "${GUFI_GETFATTR} .. ${BASENAME}/../.."
 }
 
-run_no_sort "${GUFI_GETFATTR} --help"
+# run actual script here instead of wrapper
+run_no_sort "${BINARY_DIR}/scripts/gufi_getfattr --help"
 
 (
     set -e

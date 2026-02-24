@@ -68,7 +68,8 @@ OUTPUT="gufi_ls.out"
 
 BACKUP="backup~"
 
-run_no_sort "${GUFI_LS} --help"
+# run actual script here instead of wrapper
+run_no_sort "${BINARY_DIR}/scripts/gufi_ls --help"
 
 (
 run_no_sort "${GUFI_LS}"

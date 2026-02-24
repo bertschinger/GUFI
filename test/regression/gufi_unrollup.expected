@@ -577,6 +577,8 @@ $ gufi_query -d " " -S "SELECT level(), (SELECT COUNT(*) FROM entries), (SELECT 
 1 0 24 1 ugo/ugo/dir2
 1 0 24 1 ugo/ugo/dir3
 
+$ gufi_unrollup ""
+
 $ gufi_unrollup "db.db"
 'db.db' is not a directory
 

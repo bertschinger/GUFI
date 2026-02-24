@@ -80,12 +80,26 @@ TEST(try_skip_lstat, DT_UNKNOWN) {
     struct dirent entry;
     entry.d_type = DT_UNKNOWN;
 
-    const char root[] = "@CMAKE_BINARY_DIR@";
-    struct work *work = new_work_with_name(nullptr, 0, root, strlen(root));
+    // good
+    {
+        const char root[] = "@CMAKE_BINARY_DIR@";
+        struct work *work = new_work_with_name(nullptr, 0, root, strlen(root));
+        EXPECT_EQ(try_skip_lstat(&entry, work, 0), work);
+        free(work);
+    }
 
-    EXPECT_EQ(try_skip_lstat(&entry, work, 0), work);
-
-    free(work);
+    // force lstat_wrapper to fail
+    {
+        char dir[] = "@CMAKE_BINARY_DIR@/XXXXXX\0non-existent";
+        const std::size_t len = strlen(dir);
+        EXPECT_EQ(mkdtemp(dir), dir);
+        dir[len] = '/';
+        struct work *work = new_work_with_name(nullptr, 0, dir, strlen(dir));
+        EXPECT_EQ(try_skip_lstat(&entry, work, 0), nullptr);
+        free(work);
+        dir[len] = '\0';
+        EXPECT_EQ(remove(dir), 0);
+    }
 }
 
 TEST(descend, builddir) {
