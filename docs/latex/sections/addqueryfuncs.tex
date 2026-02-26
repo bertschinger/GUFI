@@ -66,62 +66,69 @@ Convenience \href{https://www.sqlite.org/appfunc.html}{user defined functions} a
 
 \subsubsection{Functions available in \gufiquery and \gufisqlite}
 
-\begin{table}[H]
-  \centering
-  \caption{General Utility Functions}
-  \begin{tabularx}{\textwidth}{| l | X |}
-    \hline
-    Function & Description \\
-    \hline
-    \texttt{uidtouser(uid)} & Converts a UID to a user name \\
-    \hline
-    \texttt{gidtogroup(gid)} & Converts a GID to a group name \\
-    \hline
-    \texttt{modetotxt(mode)} & Converts numerical permission bits to text \\
-    \hline
-    \texttt{strftime(format, timestamp)} & Replaces \href{https://www.sqlite.org/lang_datefunc.html}{SQLite~3's custom \texttt{strftime}} with \texttt{strftime(3)} \\
-    \hline
-    \texttt{blocksize(bytes, unit)} & Converts a size to a the number of blocks of size \texttt{unit} needed to store the first argument. \texttt{unit} is the combination of at least one integer and/or a prefix and a suffix: \\
+\begin{longtable}{|l|p{0.5\linewidth}|}
+  \caption{General Utility Functions} \\
+  \hline
+  Function & Description \\
+  \hline
+  \texttt{uidtouser(uid)} & Converts a UID to a user name \\
+  \hline
+  \texttt{gidtogroup(gid)} & Converts a GID to a group name \\
+  \hline
+  \texttt{modetotxt(mode)} & Converts numerical permission bits to text \\
+  \hline
+  \texttt{strftime(format, timestamp)} & Replaces \href{https://www.sqlite.org/lang_datefunc.html}{SQLite~3's custom \texttt{strftime}} with \texttt{strftime(3)} \\
+  \hline
+  \texttt{intcat(int)} & Uses any integer. It provides the category that integer is in from Zero, O for less than 1000, K for less than 1 million, M less than billion, B for less than Trillion, T for less than quadrillion, q for less than quintillion, Q for more than Quintillion. (using 1000) \\
+  \hline
+  \texttt{bytecat(int)} & Uses any integer. Provides category from Zero, B for less than 1k, K for less than 1M, M for less than 1G, G for less than 1T, T for less than one P, P for less than 1E, E for more than 1E. (using 1024) \\
+  \hline
+  \texttt{agecat(time)} & Uses any unix epoch like mtime as input.  It subtracts that from current time and categorizes into S seconds, M minutes, H hours, d days, W weeks, M months, Y years, D decades as categories. (for use in group by) \\
+  \hline
+  \texttt{epochtoage(time, unit)} & Provides age from now from unix epoch time fields like mtime, ctime, atime, crtime. Unit s (seconds), m (minutes), h (hours), d (days), w (weeks), M (months), y (years), D (decades). (for use in group by) \\
+  \hline
+  \texttt{hostname()} & Provides the hostname \gufiquery is running on (Helpful for multi-site record source) \\
+  \hline
+  \texttt{blocksize(bytes, unit)} & Converts a size to a the number of blocks of size \texttt{unit} needed to store the first argument. \texttt{unit} is the combination of at least one integer and/or a prefix and a suffix: \\
+                                  & \\
+                                  & Prefix: \texttt{K}, \texttt{M}, \texttt{G}, \texttt{T}, \texttt{P}, \texttt{E}\\
+                                  & Suffix (multiplier): \textit{no suffix} (1024), \texttt{B} (1000), \texttt{iB} (1024) \\
+                                  & \\
+                                  & Return value is a string. \\
+                                  & \\
+                                  & Note that this function was implemented to replicate \texttt{ls} output and is meant for use with \gufils only, so use with caution. \\
+                                  & \\
+                                  & Examples: \\
+                                  & \begin{tabular}{| l | l |}
+                                      \hline
+                                      Call                    & Output \\
+                                      \hline
+                                      blocksize(1024, `1000') & 2 \\
+                                      \hline
+                                      blocksize(1024, `1024') & 1 \\
+                                      \hline
+                                      blocksize(1024, `K')    & 1K \\
+                                      \hline
+                                      blocksize(1024, `1K')   & 1 \\
+                                      \hline
+                                      blocksize(1024, `KB')   & 2KB \\
+                                      \hline
+                                      blocksize(1024, `1KB')  & 2 \\
+                                      \hline
+                                      blocksize(1024, `KiB')  & 1KiB \\
+                                      \hline
+                                      blocksize(1024, `1KiB') & 1 \\
+                                      \hline
+                                    \end{tabular} \\
                                     & \\
-                                    & Prefix: \texttt{K}, \texttt{M}, \texttt{G}, \texttt{T}, \texttt{P}, \texttt{E}\\
-                                    & Suffix (multiplier): \textit{no suffix} (1024), \texttt{B} (1000), \texttt{iB} (1024) \\
-                                    & \\
-                                    & Return value is a string. \\
-                                    & \\
-                                    & Note that this function was implemented to replicate \texttt{ls} output and is meant for use with \gufils only, so use with caution. \\
-                                    & \\
-                                    & Examples: \\
-                                    & \begin{tabular}{| l | l |}
-                                        \hline
-                                        Call                    & Output \\
-                                        \hline
-                                        blocksize(1024, `1000') & 2 \\
-                                        \hline
-                                        blocksize(1024, `1024') & 1 \\
-                                        \hline
-                                        blocksize(1024, `K')    & 1K \\
-                                        \hline
-                                        blocksize(1024, `1K')   & 1 \\
-                                        \hline
-                                        blocksize(1024, `KB')   & 2KB \\
-                                        \hline
-                                        blocksize(1024, `1KB')  & 2 \\
-                                        \hline
-                                        blocksize(1024, `KiB')  & 1KiB \\
-                                        \hline
-                                        blocksize(1024, `1KiB') & 1 \\
-                                        \hline
-                                      \end{tabular} \\
-                                    & \\
-    \hline
-    \texttt{human\_readable\_size(bytes)} & Converts a size to a human readable string \\
-    \hline
-    \texttt{basename(str)} & Return the basename of a path \\
-    \hline
-    \texttt{ext(str)} & Return the (last) extension of the input string. \\
-    \hline
-  \end{tabularx}
-\end{table}
+  \hline
+  \texttt{human\_readable\_size(bytes)} & Converts a size to a human readable string \\
+  \hline
+  \texttt{basename(str)} & Return the basename of a path \\
+  \hline
+  \texttt{ext(str)} & Return the (last) extension of the input string. \\
+  \hline
+\end{longtable}
 
 \begin{table}[H]
   \centering
@@ -243,5 +250,3 @@ Convenience \href{https://www.sqlite.org/appfunc.html}{user defined functions} a
     \hline
   \end{tabularx}
 \end{table}
-
-\clearpage

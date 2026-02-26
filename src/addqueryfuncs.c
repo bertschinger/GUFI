@@ -229,6 +229,294 @@ static void sqlite3_strftime(sqlite3_context *context, int argc, sqlite3_value *
     sqlite3_result_text(context, buf, -1, SQLITE_TRANSIENT);
 }
 
+/*
+ * Uses any integer. It provides the category that integer is in from
+ * Zero, O for less than 1000, K for less than 1 million, M less than
+ * billion, B for less than Trillion, T for less than quadrillion, q
+ * for less than quintillion, Q for more than Quintillion. (using
+ * 1000)
+ *
+ * Usage:
+ *     SELECT COUNT(*), intcat(int) AS cat
+ *     FROM ..
+ *     GROUP BY cat;
+ */
+static void intcat(sqlite3_context *context, int argc, sqlite3_value **argv) {
+    (void) argc;
+
+    static const double itK = 1000ULL;
+    static const double itM = 1000ULL * 1000ULL;
+    static const double itB = 1000ULL * 1000ULL * 1000ULL;
+    static const double itT = 1000ULL * 1000ULL * 1000ULL * 1000ULL;
+    static const double itq = 1000ULL * 1000ULL * 1000ULL * 1000ULL * 1000ULL;
+    static const double itQ = 1000ULL * 1000ULL * 1000ULL * 1000ULL * 1000ULL * 1000ULL;
+
+    const char *intin_s = (const char *) sqlite3_value_text(argv[0]);
+
+    double intin = 0;
+    if (sscanf(intin_s, "%lf", &intin) != 1) {
+        sqlite3_result_error(context, "Bad size", -1);
+        return;
+    }
+
+    if (intin < 0) {
+        sqlite3_result_error(context, "Bad size", -1);
+        return;
+    }
+
+    const char *cat = NULL;
+
+    if (intin == 0) {
+        cat = "Zero";
+    }
+    else if (intin < itK) {
+        cat = "O";
+    }
+    else if (intin < itM) {
+        cat = "K";
+    }
+    else if (intin < itB) {
+        cat = "M";
+    }
+    else if (intin < itT) {
+        cat = "B";
+    }
+    else if (intin < itq) {
+        cat = "T";
+    }
+    else if (intin < itQ) {
+        cat = "q";
+    }
+    else {
+        cat = "Q";
+    }
+
+    sqlite3_result_text(context, cat, -1, SQLITE_STATIC);
+}
+
+/*
+ * Uses any integer. Provides category from Zero, B for less than 1k,
+ * K for less than 1M, M for less than 1G, G for less than 1T, T for
+ * less than one P, P for less than 1E, E for more than 1E. (using
+ * 1024)
+ *
+ * Usage:
+ *     SELECT COUNT(*), bytecat(int) AS cat
+ *     FROM ..
+ *     GROUP BY cat;
+ */
+static void bytecat(sqlite3_context *context, int argc, sqlite3_value **argv) {
+    (void) argc;
+
+    static const double btk = 1024ULL;
+    static const double btm = 1024ULL * 1024ULL;
+    static const double btg = 1024ULL * 1024ULL * 1024ULL;
+    static const double btt = 1024ULL * 1024ULL * 1024ULL * 1024ULL;
+    static const double btp = 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
+    static const double bte = 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
+
+    const char *bytein_s = (const char *) sqlite3_value_text(argv[0]);
+
+    double bytein = 0;
+    if (sscanf(bytein_s, "%lf", &bytein) != 1) {
+        sqlite3_result_error(context, "Bad size", -1);
+        return;
+    }
+
+    if (bytein < 0) {
+        sqlite3_result_error(context, "Bad size", -1);
+        return;
+    }
+
+    const char *cat = NULL;
+
+    if (bytein == 0) {
+        cat = "Zero";
+    }
+    else if (bytein < btk) {
+        cat = "B";
+    }
+    else if (bytein < btm) {
+        cat = "K";
+    }
+    else if (bytein < btg) {
+        cat = "M";
+    }
+    else if (bytein < btt) {
+        cat = "G";
+    }
+    else if (bytein < btp) {
+        cat = "T";
+    }
+    else if (bytein < bte) {
+        cat = "P";
+    }
+    else {
+        cat = "E";
+    }
+
+    sqlite3_result_text(context, cat, -1, SQLITE_STATIC);
+}
+
+/*
+ * Uses any unix epoch like mtime as input. It subtracts that from
+ * current time and categorizes into S seconds, M minutes, H hours, d
+ * days, W weeks, M months, Y years, D decades as categories. (for use
+ * in group by)
+ *
+ * Usage:
+ *     SELECT COUNT(*), agecat(time) AS cat
+ *     FROM ..
+ *     GROUP BY cat;
+ */
+static void agecat(sqlite3_context *context, int argc, sqlite3_value **argv) {
+    (void) argc;
+
+    static const double secinm = 60;
+    static const double secinh = secinm * 60;
+    static const double secind = secinh * 24;
+    static const double secinw = secind * 7;
+    static const double secinM = secind * 30;
+    static const double seciny = secind * 365;
+    static const double secinD = seciny * 10;
+
+    const char *timein_s = (const char *) sqlite3_value_text(argv[0]);
+
+    double timein;
+    if (sscanf(timein_s, "%lf", &timein) != 1) {
+        sqlite3_result_error(context, "Bad size", -1);
+        return;
+    }
+
+    const double ageinsec = time(NULL) - timein;
+
+    const char *cat = NULL;
+
+    if (ageinsec < 0) {
+        sqlite3_result_error(context, "Bad timestamp", -1);
+        return;
+    }
+    else if (ageinsec == 0) {
+        cat = "Zero";
+    }
+    else if (ageinsec < secinm) {
+        cat = "Secs";
+    }
+    else if (ageinsec < secinh) {
+        cat = "Mins";
+    }
+    else if (ageinsec < secind) {
+        cat = "Hrs";
+    }
+    else if (ageinsec < secinw) {
+        cat = "Days";
+    }
+    else if (ageinsec < secinM) {
+        cat = "Wks";
+    }
+    else if (ageinsec < seciny) {
+        cat = "Mos";
+    }
+    else if (ageinsec < secinD) {
+        cat = "Yrs";
+    }
+    else {
+        cat = "Decs";
+    }
+
+    sqlite3_result_text(context, cat, -1, SQLITE_STATIC);
+}
+
+/*
+ * Provides age from now from unix epoch time fields like mtime,
+ * ctime, atime, crtime. Unit s (seconds), m (minutes), h (hours), d
+ * (days), w (weeks), M (months), y (years), D (decades). (for use in
+ * group by)
+ *
+ * Usage:
+ *     SELECT COUNT(*), epochtoage(time, unit) AS cat
+ *     FROM ..
+ *     GROUP BY cat;
+ */
+static void epochtoage(sqlite3_context *context, int argc, sqlite3_value **argv) {
+    (void) argc;
+
+    static const int64_t secins = 1;
+    static const int64_t secinm = 60;
+    static const int64_t secinh = secinm * 60;
+    static const int64_t secind = secinh * 24;
+    static const int64_t secinw = secind * 7;
+    static const int64_t secinM = secind * 30;
+    static const int64_t seciny = secind * 365;
+    static const int64_t secinD = seciny * 10;
+
+    const char *timein_s = (const char *) sqlite3_value_text(argv[0]);
+    const char *unit_s   = (const char *) sqlite3_value_text(argv[1]);
+
+    double timein;
+    if (sscanf(timein_s, "%lf", &timein) != 1) {
+        sqlite3_result_error(context, "Bad size", -1);
+        return;
+    }
+
+    const int64_t ageinsec = time(NULL) - timein;
+    if (ageinsec < 0) {
+        sqlite3_result_error(context, "Bad timestamp", -1);
+        return;
+    }
+
+    int64_t unit = 0;
+    switch (*unit_s) {
+        case 's':
+            unit = secins;
+            break;
+        case 'm':
+            unit = secinm;
+            break;
+        case 'h':
+            unit = secinh;
+            break;
+        case 'd':
+            unit = secind;
+            break;
+        case 'w':
+            unit = secinw;
+            break;
+        case 'M':
+            unit = secinM;
+            break;
+        case 'y':
+            unit = seciny;
+            break;
+        case 'D':
+            unit = secinD;
+            break;
+        default:
+            unit = secind; /* default to day */
+            break;
+    }
+
+    sqlite3_result_int64(context, ageinsec / unit);
+}
+
+/*
+ * Provides the hostname gufi_query is running on
+ * (Helpful for multi-site record source)
+ *
+ * Usage:
+ *     SELECT hostname();
+ */
+static void hostname(sqlite3_context *context, int argc, sqlite3_value **argv)
+{
+    (void) argc; (void) argv;
+
+    char hostname[256] = "NOHOST";
+    gethostname(hostname, sizeof(hostname));
+    hostname[255] = '\0'; /* force terminate in case gethostname(2) errored */
+
+    sqlite3_result_text(context, hostname, -1, SQLITE_TRANSIENT);
+}
+
 /* uint64_t goes up to E */
 static const char SIZE[] = {'K', 'M', 'G', 'T', 'P', 'E'};
 
@@ -925,6 +1213,16 @@ int addqueryfuncs(sqlite3 *db) {
                                  NULL, &sqlite3_strftime,          NULL, NULL)   == SQLITE_OK) &&
         (sqlite3_create_function(db,   "blocksize",           2,   SQLITE_UTF8,
                                  NULL, &blocksize,                 NULL, NULL)   == SQLITE_OK) &&
+        (sqlite3_create_function(db,   "intcat",              1,   SQLITE_UTF8,
+                                 NULL, &intcat,                    NULL, NULL)   == SQLITE_OK) &&
+        (sqlite3_create_function(db,   "bytecat",             1,   SQLITE_UTF8,
+                                 NULL, &bytecat,                   NULL, NULL)   == SQLITE_OK) &&
+        (sqlite3_create_function(db,   "agecat",              1,   SQLITE_UTF8,
+                                 NULL, &agecat,                    NULL, NULL)   == SQLITE_OK) &&
+        (sqlite3_create_function(db,   "epochtoage",          2,   SQLITE_UTF8,
+                                 NULL, &epochtoage,                NULL, NULL)   == SQLITE_OK) &&
+        (sqlite3_create_function(db,   "hostname",            0,   SQLITE_UTF8,
+                                 NULL, &hostname,                  NULL, NULL) == SQLITE_OK) &&
         (sqlite3_create_function(db,   "human_readable_size", 1,   SQLITE_UTF8,
                                  NULL, &human_readable_size,       NULL, NULL)   == SQLITE_OK) &&
         (sqlite3_create_function(db,   "basename",            1,   SQLITE_UTF8,
