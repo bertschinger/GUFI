@@ -158,14 +158,14 @@ static void test_log2_hist(const std::vector <std::string> &types,
 
         char create[MAXSQL];
         snprintf(create, sizeof(create), "CREATE TABLE test (value %s);", type.c_str());
-        ASSERT_EQ(sqlite3_exec(db, create, nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, create, nullptr, nullptr, nullptr), SQLITE_OK);
 
         for(std::string const &value : values) {
             insert(db, "value", value);
         }
 
         char *hist_str = {nullptr};
-        ASSERT_EQ(sqlite3_exec(db, "SELECT log_hist(value, 2, 3) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT log_hist(value, 2, 3) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
@@ -194,10 +194,10 @@ TEST(histogram, log) {
 
         char create[MAXSQL];
         snprintf(create, sizeof(create), "CREATE TABLE test (value INT);");
-        ASSERT_EQ(sqlite3_exec(db, create, nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, create, nullptr, nullptr, nullptr), SQLITE_OK);
 
         char *hist_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT log_hist(value, 2, 3) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT log_hist(value, 2, 3) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
@@ -223,13 +223,13 @@ TEST(histogram, log) {
         sqlite3 *db = nullptr;
         setup_db(&db);
 
-        ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE hist (str TEXT, keep INT);",
+        EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE hist (str TEXT, keep INT);",
                                nullptr, nullptr, nullptr), SQLITE_OK);
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(str, 2, 2), 1 FROM hist;",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(str, 2, 2), 1 FROM hist;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(1, 2, 2), 1;",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(1, 2, 2), 1;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(2, 2, 2), 1;",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(2, 2, 2), 1;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
 
         char *hist_str = nullptr;
@@ -252,17 +252,17 @@ TEST(histogram, log) {
         hist_str = nullptr;
 
         // cannot combine histograms with different bases
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(2, 4, 2), 0;",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(2, 4, 2), 0;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
         EXPECT_NE(sqlite3_exec(db, "SELECT log_hist_combine(str) FROM hist;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         EXPECT_EQ(hist_str, nullptr);
 
-        ASSERT_EQ(sqlite3_exec(db, "DELETE FROM hist WHERE keep == 0;",
+        EXPECT_EQ(sqlite3_exec(db, "DELETE FROM hist WHERE keep == 0;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
 
         // cannot combine histograms with different bucket counts
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(2, 2, 4), 0;",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT log_hist(2, 2, 4), 0;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
         EXPECT_NE(sqlite3_exec(db, "SELECT log_hist_combine(str) FROM hist;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
@@ -286,8 +286,8 @@ TEST(histogram, log) {
         sqlite3 *db = nullptr;
         setup_db(&db);
 
-        ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE test (value INT);", nullptr, nullptr, nullptr), SQLITE_OK);
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO  test  VALUES (0);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE test (value INT);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO  test  VALUES (0);", nullptr, nullptr, nullptr), SQLITE_OK);
 
         EXPECT_NE(sqlite3_exec(db, "SELECT log_hist(value, 1, 3) FROM test;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
@@ -314,13 +314,13 @@ TEST(histogram, mode) {
 
     sqlite3 *db = nullptr;
     setup_db(&db);
-    ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE test (mode INT);",
+    EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE test (mode INT);",
                            nullptr, nullptr, nullptr), SQLITE_OK);
 
     // nothing in buckets
     {
         char *hist_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT mode_hist(mode) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT mode_hist(mode) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
 
         mode_hist *hist = mode_hist_parse(hist_str);
@@ -349,7 +349,7 @@ TEST(histogram, mode) {
     // normal usage
     {
         char *hist_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT mode_hist(mode) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT mode_hist(mode) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
 
         mode_hist *hist = mode_hist_parse(hist_str);
@@ -363,13 +363,13 @@ TEST(histogram, mode) {
 
     // combine histograms
     {
-        ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE hist (str TEXT);",
+        EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE hist (str TEXT);",
                                nullptr, nullptr, nullptr), SQLITE_OK);
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT mode_hist(str) FROM hist;",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT mode_hist(str) FROM hist;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT mode_hist(1);",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT mode_hist(1);",
                                nullptr, nullptr, nullptr), SQLITE_OK);
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT mode_hist(2);",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hist SELECT mode_hist(2);",
                                nullptr, nullptr, nullptr), SQLITE_OK);
 
         char *hist_str = nullptr;
@@ -423,13 +423,13 @@ TEST(histogram, time) {
 
     sqlite3 *db = nullptr;
     setup_db(&db);
-    ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE test (timestamp INT);",
+    EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE test (timestamp INT);",
                            nullptr, nullptr, nullptr), SQLITE_OK);
 
     // nothing in buckets
     {
         char *hist_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, select, copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, select, copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
         time_hist *hist = time_hist_parse(hist_str);
@@ -461,7 +461,7 @@ TEST(histogram, time) {
     // normal usage
     {
         char *hist_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, select, copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, select, copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
         time_hist *hist = time_hist_parse(hist_str);
@@ -490,13 +490,13 @@ TEST(histogram, time) {
     {
         char sql[MAXSQL];
 
-        ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE hist (str TEXT);",
+        EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE hist (str TEXT);",
                                nullptr, nullptr, nullptr), SQLITE_OK);
 
         SNPRINTF(sql, sizeof(sql), "INSERT INTO hist SELECT time_hist(%s, %s);", timestamps[4].c_str(), reftime);
-        ASSERT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK);
         SNPRINTF(sql, sizeof(sql), "INSERT INTO hist SELECT time_hist(%s, %s);", timestamps[1].c_str(), reftime);
-        ASSERT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, sql, nullptr, nullptr, nullptr), SQLITE_OK);
 
         char *hist_str = nullptr;
         EXPECT_EQ(sqlite3_exec(db, "SELECT time_hist_combine(str) FROM hist;",
@@ -596,13 +596,13 @@ static void check_combined(category_hist_t *hist) {
 TEST(histogram, category) {
     sqlite3 *db = nullptr;
     setup_db(&db);
-    ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE test (category TEXT);",
+    EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE test (category TEXT);",
                            nullptr, nullptr, nullptr), SQLITE_OK);
 
     // no buckets
     {
         char *hist_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 0, 0) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 0, 0) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
@@ -622,7 +622,7 @@ TEST(histogram, category) {
 
     {
         char *hist_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 1, 1) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 1, 1) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
@@ -655,7 +655,7 @@ TEST(histogram, category) {
         free(hist_str);
         hist_str = nullptr;
 
-        ASSERT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 0, 1) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 0, 1) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
@@ -711,12 +711,12 @@ TEST(histogram, category) {
     // combine histograms in C
     {
         char *with = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 1, 0) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 1, 0) FROM test;",
                                copy_columns_callback, &with, nullptr), SQLITE_OK);
         ASSERT_NE(with, nullptr);
 
         char *without = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 0, 0) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT category_hist(category, 0, 0) FROM test;",
                                copy_columns_callback, &without, nullptr), SQLITE_OK);
         ASSERT_NE(without, nullptr);
 
@@ -741,15 +741,15 @@ TEST(histogram, category) {
 
     // combine histograms in SQL
     {
-        ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE hists(str TEXT);",
+        EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE hists(str TEXT);",
                                nullptr, nullptr, nullptr), SQLITE_OK);
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hists SELECT category_hist(category, 1, 0) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hists SELECT category_hist(category, 1, 0) FROM test;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO hists SELECT category_hist(category, 0, 0) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO hists SELECT category_hist(category, 0, 0) FROM test;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
 
         char *combined_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT category_hist_combine(str, 1) FROM hists;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT category_hist_combine(str, 1) FROM hists;",
                                copy_columns_callback, &combined_str, nullptr), SQLITE_OK);
 
         category_hist_t *sql_sum = category_hist_parse(combined_str);
@@ -803,13 +803,13 @@ static const std::string EXTENSIONS[] = {
 TEST(histogram, extension) {
     sqlite3 *db = nullptr;
     setup_db(&db);
-    ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE test (extension TEXT);",
+    EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE test (extension TEXT);",
                            nullptr, nullptr, nullptr), SQLITE_OK);
 
     // no buckets
     {
         char *hist_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT extension_hist(extension, 0, 0) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT extension_hist(extension, 0, 0) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
@@ -829,7 +829,7 @@ TEST(histogram, extension) {
 
     {
         char *hist_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT extension_hist(extension, 1, 1) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT extension_hist(extension, 1, 1) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
@@ -865,7 +865,7 @@ TEST(histogram, extension) {
         free(hist_str);
         hist_str = nullptr;
 
-        ASSERT_EQ(sqlite3_exec(db, "SELECT extension_hist(extension, 0, 1) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT extension_hist(extension, 0, 1) FROM test;",
                                copy_columns_callback, &hist_str, nullptr), SQLITE_OK);
         ASSERT_NE(hist_str, nullptr);
 
@@ -931,13 +931,13 @@ TEST(histogram, extension) {
 TEST(histogram, mode_count) {
     sqlite3 *db = nullptr;
     setup_db(&db);
-    ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE test (category TEXT);",
+    EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE test (category TEXT);",
                            nullptr, nullptr, nullptr), SQLITE_OK);
 
     // no mode
     {
         char *mc_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT mode_count(category) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT mode_count(category) FROM test;",
                                copy_columns_callback, &mc_str, nullptr), SQLITE_OK);
         ASSERT_EQ(mc_str, nullptr);
     }
@@ -949,7 +949,7 @@ TEST(histogram, mode_count) {
         }
 
         char *mc_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT mode_count(category) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT mode_count(category) FROM test;",
                                copy_columns_callback, &mc_str, nullptr), SQLITE_OK);
         ASSERT_EQ(mc_str, nullptr);
 
@@ -958,7 +958,7 @@ TEST(histogram, mode_count) {
 
         free(mc_str);
 
-        ASSERT_EQ(sqlite3_exec(db, "DELETE FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "DELETE FROM test;",
                                nullptr, nullptr, nullptr), SQLITE_OK);
     }
 
@@ -969,7 +969,7 @@ TEST(histogram, mode_count) {
         }
 
         char *mc_str = nullptr;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT mode_count(category) FROM test;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT mode_count(category) FROM test;",
                                copy_columns_callback, &mc_str, nullptr), SQLITE_OK);
         ASSERT_NE(mc_str, nullptr);
 

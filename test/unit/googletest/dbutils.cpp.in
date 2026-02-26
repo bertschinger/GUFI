@@ -332,7 +332,7 @@ TEST(get_col_types, have_cols) {
                               SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI,
                               nullptr), SQLITE_OK);
 
-    ASSERT_EQ(sqlite3_exec(db, CREATE_TABLE_TEST,
+    EXPECT_EQ(sqlite3_exec(db, CREATE_TABLE_TEST,
                            nullptr, nullptr, nullptr), SQLITE_OK);
 
     str = REFSTR("SELECT * FROM test;", 19);
@@ -362,7 +362,7 @@ TEST(get_col_types, no_cols) {
                               SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI,
                               nullptr), SQLITE_OK);
 
-    ASSERT_EQ(sqlite3_exec(db, CREATE_TABLE_TEST,
+    EXPECT_EQ(sqlite3_exec(db, CREATE_TABLE_TEST,
                            nullptr, nullptr, nullptr), SQLITE_OK);
 
     str.data = (char *) "INSERT INTO test (i) VALUES (0);";
@@ -386,7 +386,7 @@ TEST(get, col_types) {
                               SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI,
                               nullptr),
               SQLITE_OK);
-    ASSERT_EQ(sqlite3_exec(db, CREATE_TABLE_TEST,
+    EXPECT_EQ(sqlite3_exec(db, CREATE_TABLE_TEST,
                            nullptr, nullptr, nullptr), SQLITE_OK);
 
     // bad db

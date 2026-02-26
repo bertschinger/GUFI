@@ -97,17 +97,17 @@ TEST(addqueryfuncs, uidtouser) {
 
     /* convert good uid */
     SNPRINTF(query, MAXSQL, "SELECT uidtouser(%" STAT_uid ");", uid);
-    ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, pwd->pw_name);
 
     /* convert bad uid */
     SNPRINTF(query, MAXSQL, "SELECT uidtouser('abcd');");
-    ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_EQ(output, nullptr);
 
     /* convert NULL */
     SNPRINTF(query, MAXSQL, "SELECT uidtouser(NULL);");
-    ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_EQ(output, nullptr);
 
     /* convert large number */
@@ -137,17 +137,17 @@ TEST(addqueryfuncs, gidtogroup) {
 
     /* convert good gid */
     SNPRINTF(query, MAXSQL, "SELECT gidtogroup(%" STAT_gid ");", gid);
-    ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, grp->gr_name);
 
     /* convert bad gid */
     SNPRINTF(query, MAXSQL, "SELECT gidtogroup('abcd');");
-    ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_EQ(output, nullptr);
 
     /* convert NULL */
     SNPRINTF(query, MAXSQL, "SELECT gidtogroup(NULL);");
-    ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_EQ(output, nullptr);
 
     /* convert large number */
@@ -172,12 +172,12 @@ TEST(addqueryfuncs, modetotxt) {
 
         // file
         SNPRINTF(query, MAXSQL, "SELECT modetotxt(%zu);", (size_t) perm);
-        ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
         EXPECT_STREQ(output, modetostr(expected, 11, perm));
 
         // directory
         SNPRINTF(query, MAXSQL, "SELECT modetotxt(%zu);", perm | S_IFDIR);
-        ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
         EXPECT_STREQ(output, modetostr(expected, 11, perm | S_IFDIR));
     }
 
@@ -200,7 +200,7 @@ TEST(addqueryfuncs, strftime) {
 
     char buf[MAXPATH] = {};
     char *output = buf;
-    ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
 
     char expected[MAXSQL] = {};
     struct tm tm;
@@ -472,33 +472,33 @@ TEST(addqueryfuncs, blocksize) {
             char expected[MAXPATH] = {};
 
             SNPRINTF(query, MAXSQL, "SELECT blocksize(%zu, '%c');", iBinputs[j], SIZE[i]);
-            ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+            EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
             SNPRINTF(expected, MAXPATH, "%c%c", expecteds[j], SIZE[i]);
             EXPECT_STREQ(output, expected);
 
             SNPRINTF(query, MAXSQL, "SELECT blocksize(%zu, '%cB');", Binputs[j], SIZE[i]);
-            ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+            EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
             SNPRINTF(expected, MAXPATH, "%c%cB", expecteds[j], SIZE[i]);
             EXPECT_STREQ(output, expected);
 
             SNPRINTF(query, MAXSQL, "SELECT blocksize(%zu, '%ciB');", iBinputs[j], SIZE[i]);
-            ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+            EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
             SNPRINTF(expected, MAXPATH, "%c%ciB", expecteds[j], SIZE[i]);
             EXPECT_STREQ(output, expected);
         }
     }
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize('', '');",      copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* non-integer size argument */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize('abc', '');",   copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* missing size argument */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'i');",      copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* single bad character */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'iB');",     copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 1st character isn't valid */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'ij');",     copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 2nd character isn't B */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'AiB');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 1st character isn't valid */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'AjB');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 2nd character isn't i */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'Aij');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 3nd character isn't B */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize(0, '0KB');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* block coefficient is 0 */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize(0, '1.2KiB');", copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* decimal point is not allowed */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'KiBGiB');", copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* suffix is too long */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize('', '');",      copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* non-integer size argument */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize('abc', '');",   copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* missing size argument */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'i');",      copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* single bad character */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'iB');",     copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 1st character isn't valid */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'ij');",     copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 2nd character isn't B */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'AiB');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 1st character isn't valid */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'AjB');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 2nd character isn't i */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'Aij');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* 3nd character isn't B */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize(0, '0KB');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* block coefficient is 0 */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize(0, '1.2KiB');", copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* decimal point is not allowed */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT blocksize(0, 'KiBGiB');", copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* suffix is too long */
 
     sqlite3_close(db);
 }
@@ -517,7 +517,7 @@ TEST(addqueryfuncs, human_readable_size) {
     std::size_t size = 1;
 
     SNPRINTF(query, MAXSQL, "SELECT human_readable_size(%zu);", size);
-    ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "1.0");
 
     // greater than 1K - has unit suffix
@@ -527,13 +527,13 @@ TEST(addqueryfuncs, human_readable_size) {
         size *= 1024;
 
         SNPRINTF(query, MAXSQL, "SELECT human_readable_size(%zu);", size + (size / 10));
-        ASSERT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, query, copy_columns_callback, &output, nullptr), SQLITE_OK);
         SNPRINTF(expected, MAXPATH, "1.1%c", SIZE[i]);
         EXPECT_STREQ(output, expected);
     }
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT human_readable_size('');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* empty input */
-    ASSERT_EQ(sqlite3_exec(db, "SELECT human_readable_size('abc');", copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* non-integer input */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT human_readable_size('');",    copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* empty input */
+    EXPECT_EQ(sqlite3_exec(db, "SELECT human_readable_size('abc');", copy_columns_callback, nullptr, nullptr), SQLITE_ERROR); /* non-integer input */
 
     sqlite3_close(db);
 }
@@ -550,27 +550,27 @@ TEST(addqueryfuncs, basename) {
 
     /* from basename(3) manpage */
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT basename('/usr/lib');", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT basename('/usr/lib');", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "lib");
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT basename('/usr/');", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT basename('/usr/');", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "usr");
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT basename('usr');", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT basename('usr');", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "usr");
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT basename('/');", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT basename('/');", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "/");
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT basename('.');", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT basename('.');", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, ".");
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT basename('..');", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT basename('..');", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "..");
 
     /* not from manpage */
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT basename(NULL);", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT basename(NULL);", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "");
 
     sqlite3_close(db);
@@ -619,17 +619,17 @@ TEST(addqueryfuncs, rpad) {
     char buf[MAXPATH];
     char *output = buf;
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT rpad(1, 1);", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT rpad(1, 1);", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "1");
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT rpad(1, 2);", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT rpad(1, 2);", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "1 ");
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT rpad(1, 3);", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT rpad(1, 3);", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "1  ");
 
     // input is longer than requested padding - return entire input (don't cut)
-    ASSERT_EQ(sqlite3_exec(db, "SELECT rpad('abcde', 3);", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT rpad('abcde', 3);", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "abcde");
 
     sqlite3_close(db);
@@ -645,17 +645,17 @@ TEST(addqueryfuncs, strop) {
     char buf[MAXPATH] = {};
     char *output = buf;
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT strop('echo abc def');", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT strop('echo abc def');", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "abc def");
 
     char *err = nullptr;
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT strop('');", copy_columns_callback, &output, &err), SQLITE_ERROR);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT strop('');", copy_columns_callback, &output, &err), SQLITE_ERROR);
     EXPECT_NE(err, nullptr);
     sqlite3_free(err);
     err = nullptr;
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT strop('echo');", copy_columns_callback, &output, &err), SQLITE_ERROR);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT strop('echo');", copy_columns_callback, &output, &err), SQLITE_ERROR);
     EXPECT_NE(err, nullptr);
     sqlite3_free(err);
     err = nullptr;
@@ -669,7 +669,7 @@ TEST(addqueryfuncs, strop) {
         fewer_fds.rlim_cur = 3;
         ASSERT_EQ(setrlimit(RLIMIT_NOFILE, &fewer_fds), 0);
 
-        ASSERT_EQ(sqlite3_exec(db, "SELECT strop('echo abc def');", copy_columns_callback, &output, &err), SQLITE_ERROR);
+        EXPECT_EQ(sqlite3_exec(db, "SELECT strop('echo abc def');", copy_columns_callback, &output, &err), SQLITE_ERROR);
         EXPECT_NE(err, nullptr);
         sqlite3_free(err);
         err = nullptr;
@@ -690,26 +690,26 @@ TEST(addqueryfuncs, intop) {
     char buf[MAXPATH] = {};
     char *output = buf;
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT intop('echo 123');", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT intop('echo 123');", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "123");
 
     // wc is part of coreutils
-    ASSERT_EQ(sqlite3_exec(db, "SELECT intop('echo 123 | wc -l');", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT intop('echo 123 | wc -l');", copy_columns_callback, &output, nullptr), SQLITE_OK);
     EXPECT_STREQ(output, "1");
 
     char *err = nullptr;
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT intop('');", copy_columns_callback, &output, &err), SQLITE_ERROR);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT intop('');", copy_columns_callback, &output, &err), SQLITE_ERROR);
     EXPECT_NE(err, nullptr);
     sqlite3_free(err);
     err = nullptr;
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT intop('echo');", copy_columns_callback, &output, &err), SQLITE_ERROR);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT intop('echo');", copy_columns_callback, &output, &err), SQLITE_ERROR);
     EXPECT_NE(err, nullptr);
     sqlite3_free(err);
     err = nullptr;
 
-    ASSERT_EQ(sqlite3_exec(db, "SELECT intop('echo abc');", copy_columns_callback, &output, &err), SQLITE_ERROR);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT intop('echo abc');", copy_columns_callback, &output, &err), SQLITE_ERROR);
     EXPECT_NE(err, nullptr);
     sqlite3_free(err);
     err = nullptr;
@@ -723,7 +723,7 @@ TEST(addqueryfuncs, intop) {
         fewer_fds.rlim_cur = 3;
         ASSERT_EQ(setrlimit(RLIMIT_NOFILE, &fewer_fds), 0);
 
-        ASSERT_EQ(sqlite3_exec(db, "SELECT intop('echo 123');", copy_columns_callback, &output, &err), SQLITE_ERROR);
+        EXPECT_EQ(sqlite3_exec(db, "SELECT intop('echo 123');", copy_columns_callback, &output, &err), SQLITE_ERROR);
         EXPECT_NE(err, nullptr);
         sqlite3_free(err);
         err = nullptr;
@@ -775,9 +775,9 @@ TEST(addqueryfuncs, blobop) {
     // empty file
     {
         snprintf(cmd, sizeof(cmd), "CREATE TABLE data(col BLOB); INSERT INTO data SELECT blobop('cat %s');", temp);
-        ASSERT_EQ(sqlite3_exec(db, cmd, nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, cmd, nullptr, nullptr, nullptr), SQLITE_OK);
 
-        ASSERT_EQ(sqlite3_exec(db, "SELECT length(col), col FROM data; DROP TABLE data;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT length(col), col FROM data; DROP TABLE data;",
                                copy_blob_column_callback, &output, &err), SQLITE_OK);
         EXPECT_EQ(err, nullptr);
         EXPECT_EQ(output.len, (std::size_t) 0);
@@ -791,9 +791,9 @@ TEST(addqueryfuncs, blobop) {
         const std::size_t len = sizeof(data) - 1;
         std::ofstream(temp).write(data, len);
         snprintf(cmd, sizeof(cmd), "CREATE TABLE data(col BLOB); INSERT INTO data SELECT blobop('cat %s');", temp);
-        ASSERT_EQ(sqlite3_exec(db, cmd, nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, cmd, nullptr, nullptr, nullptr), SQLITE_OK);
 
-        ASSERT_EQ(sqlite3_exec(db, "SELECT length(col), col FROM data; DROP TABLE data;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT length(col), col FROM data; DROP TABLE data;",
                                copy_blob_column_callback, &output, &err), SQLITE_OK);
         EXPECT_EQ(err, nullptr);
         EXPECT_EQ(output.len, len);
@@ -808,9 +808,9 @@ TEST(addqueryfuncs, blobop) {
         const std::string A(len, 'a');
         std::ofstream(temp) << A;
         snprintf(cmd, sizeof(cmd), "CREATE TABLE data(col BLOB); INSERT INTO data SELECT blobop('cat %s');", temp);
-        ASSERT_EQ(sqlite3_exec(db, cmd, NULL, NULL, NULL), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, cmd, NULL, NULL, NULL), SQLITE_OK);
 
-        ASSERT_EQ(sqlite3_exec(db, "SELECT length(col), col FROM data; DROP TABLE data;",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT length(col), col FROM data; DROP TABLE data;",
                                copy_blob_column_callback, &output, &err), SQLITE_OK);
         EXPECT_EQ(err, nullptr);
         EXPECT_EQ(output.len, len);
@@ -828,7 +828,7 @@ TEST(addqueryfuncs, blobop) {
         fewer_fds.rlim_cur = 3;
         ASSERT_EQ(setrlimit(RLIMIT_NOFILE, &fewer_fds), 0);
 
-        ASSERT_EQ(sqlite3_exec(db, "SELECT blobop('echo blob');",
+        EXPECT_EQ(sqlite3_exec(db, "SELECT blobop('echo blob');",
                                copy_columns_callback, &output, &err), SQLITE_ERROR);
         EXPECT_NE(err, nullptr);
         sqlite3_free(err);
@@ -854,7 +854,7 @@ TEST(addqueryfuncs, stdevs) {
     ASSERT_NE(db, nullptr);
 
     ASSERT_EQ(addqueryfuncs(db), 0);
-    ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE t (value INT);", nullptr, nullptr, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE t (value INT);", nullptr, nullptr, nullptr), SQLITE_OK);
 
     double stdev = 0;
 
@@ -865,14 +865,14 @@ TEST(addqueryfuncs, stdevs) {
 
     // 1 value
     {
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (1);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (1);", nullptr, nullptr, nullptr), SQLITE_OK);
 
         EXPECT_EQ(sqlite3_exec(db, "SELECT stdevs(value) FROM t", double_callback, &stdev, nullptr), SQLITE_ABORT);
     }
 
     // 5 values
     {
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (2), (3), (4), (5);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (2), (3), (4), (5);", nullptr, nullptr, nullptr), SQLITE_OK);
 
         EXPECT_EQ(sqlite3_exec(db, "SELECT stdevs(value) FROM t", double_callback, &stdev, nullptr), SQLITE_OK);
         EXPECT_DOUBLE_EQ(stdev * stdev * 2, (double) 5); /* sqrt(5 / 2) */
@@ -887,7 +887,7 @@ TEST(addqueryfuncs, stdevp) {
     ASSERT_NE(db, nullptr);
 
     ASSERT_EQ(addqueryfuncs(db), 0);
-    ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE t (value INT);", nullptr, nullptr, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE t (value INT);", nullptr, nullptr, nullptr), SQLITE_OK);
 
     double stdev = 0;
 
@@ -898,14 +898,14 @@ TEST(addqueryfuncs, stdevp) {
 
     // 1 value
     {
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (1);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (1);", nullptr, nullptr, nullptr), SQLITE_OK);
 
         EXPECT_EQ(sqlite3_exec(db, "SELECT stdevp(value) FROM t", double_callback, &stdev, nullptr), SQLITE_ABORT);
     }
 
     // 5 values
     {
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (2), (3), (4), (5);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (2), (3), (4), (5);", nullptr, nullptr, nullptr), SQLITE_OK);
 
         EXPECT_EQ(sqlite3_exec(db, "SELECT stdevp(value) FROM t", double_callback, &stdev, nullptr), SQLITE_OK);
         EXPECT_FLOAT_EQ(stdev * stdev, (double) 2); /* sqrt(2); need to use float instead of double due to slightly too large differences */
@@ -959,7 +959,7 @@ TEST(addqueryfuncs, median) {
     ASSERT_NE(db, nullptr);
 
     ASSERT_EQ(addqueryfuncs(db), 0);
-    ASSERT_EQ(sqlite3_exec(db, "CREATE TABLE t (value INT);", nullptr, nullptr, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "CREATE TABLE t (value INT);", nullptr, nullptr, nullptr), SQLITE_OK);
 
     double median = 0;
 
@@ -970,7 +970,7 @@ TEST(addqueryfuncs, median) {
 
     // 1 value short circuit
     {
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (1);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (1);", nullptr, nullptr, nullptr), SQLITE_OK);
 
         EXPECT_EQ(sqlite3_exec(db, "SELECT median(value) FROM t", double_callback, &median, nullptr), SQLITE_OK);
         EXPECT_DOUBLE_EQ(median, (double) 1);
@@ -978,7 +978,7 @@ TEST(addqueryfuncs, median) {
 
     // 2 values short circuit
     {
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (2);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (2);", nullptr, nullptr, nullptr), SQLITE_OK);
 
         EXPECT_EQ(sqlite3_exec(db, "SELECT median(value) FROM t", double_callback, &median, nullptr), SQLITE_OK);
         EXPECT_DOUBLE_EQ(median, (double) 1.5);
@@ -986,7 +986,7 @@ TEST(addqueryfuncs, median) {
 
     // odd number of values
     {
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (3), (4), (5);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (3), (4), (5);", nullptr, nullptr, nullptr), SQLITE_OK);
 
         EXPECT_EQ(sqlite3_exec(db, "SELECT median(value) FROM t", double_callback, &median, nullptr), SQLITE_OK);
         EXPECT_DOUBLE_EQ(median, (double) 3);
@@ -994,7 +994,7 @@ TEST(addqueryfuncs, median) {
 
     // even number of values
     {
-        ASSERT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (6);", nullptr, nullptr, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "INSERT INTO t (value) VALUES (6);", nullptr, nullptr, nullptr), SQLITE_OK);
 
         EXPECT_EQ(sqlite3_exec(db, "SELECT median(value) FROM t", double_callback, &median, nullptr), SQLITE_OK);
         EXPECT_DOUBLE_EQ(median, (double) 3.5);
@@ -1268,7 +1268,7 @@ TEST(addqueryfuncs_with_context, starting_point) {
 
     char buf[MAXPATH] = {};
     char *output = buf;
-    ASSERT_EQ(sqlite3_exec(db, "SELECT starting_point();", copy_columns_callback, &output, nullptr), SQLITE_OK);
+    EXPECT_EQ(sqlite3_exec(db, "SELECT starting_point();", copy_columns_callback, &output, nullptr), SQLITE_OK);
 
     EXPECT_STREQ(output, work->orig_root.data);
 
@@ -1292,7 +1292,7 @@ TEST(addqueryfuncs_with_context, level) {
 
         char buf[MAXPATH] = {};
         char *output = buf;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT level();", copy_columns_callback, &output, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "SELECT level();", copy_columns_callback, &output, nullptr), SQLITE_OK);
 
         char expected[MAXPATH] = {};
         SNPRINTF(expected, MAXPATH, "%zu", work->level);
@@ -1321,7 +1321,7 @@ TEST(addqueryfuncs_with_context, pinode) {
 
         char buf[MAXPATH] = {};
         char *output = buf;
-        ASSERT_EQ(sqlite3_exec(db, "SELECT pinode();", copy_columns_callback, &output, nullptr), SQLITE_OK);
+        EXPECT_EQ(sqlite3_exec(db, "SELECT pinode();", copy_columns_callback, &output, nullptr), SQLITE_OK);
 
         char expected[MAXPATH] = {};
         SNPRINTF(expected, MAXPATH, "%lld", work->pinode);
