@@ -214,8 +214,8 @@ else()
   message(STATUS "Not compiling C++ sources")
 endif()
 
-# Python3 is required
-find_package(Python3 REQUIRED COMPONENTS Interpreter REQUIRED)
+# Python3.9+ is required
+find_package(Python3 3.9 COMPONENTS Interpreter REQUIRED)
 
 # require find_program to return executables with -r+x permissions
 if (POLICY CMP0109)
