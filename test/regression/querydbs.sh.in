@@ -84,7 +84,7 @@ cleanup
 
 OUTPUT="querydbs.out"
 
-run_no_sort "${QUERYDBS} --help"
+run_no_sort "${BINARY_DIR}/scripts/querydbs --help"
 
 (
 echo "# Use ${GUFI_QUERY} to generate per-thread result database files" | replace

@@ -81,17 +81,11 @@ SORT_DIRS = {
 }
 
 def clock():
-    if sys.version_info.minor < 3:
-        return time.time()
-    if sys.version_info.minor < 7:
-        return time.monotonic() # Python 3.3
     return time.monotonic_ns()  # Python 3.7
 
 def clock_diff(start, end):
     diff = end - start
-    if sys.version_info.minor >= 7:
-        diff /= 1e9
-    return diff
+    return diff / 1e9
 
 # wait on sbatch, not the actual job
 def run_slurm(args, target, cmd):

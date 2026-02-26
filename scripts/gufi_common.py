@@ -69,10 +69,7 @@ import re
 import sys
 import time
 
-if (sys.version_info.major == 3) and (sys.version_info.minor < 3):
-    from pipes import quote as sanitize # pylint: disable=deprecated-module
-else:
-    from shlex import quote as sanitize # new in Python 3.3
+from shlex import quote as sanitize
 
 VERSION = '@VERSION_STRING@'
 

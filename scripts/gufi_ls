@@ -71,10 +71,6 @@ import gufi_common
 import gufi_config
 
 def select_size(args, name):
-    # --full-time implies long listing
-    if not args.long_listing and not args.full_time:
-        return []
-
     # in GNU ls, order of arguments determines which one has precedence
     # here, --human-readable has precedence
     if args.human_readable:
@@ -87,10 +83,6 @@ def select_size(args, name):
     return [column.format(name)]
 
 def select_time(args, name):
-    # --full-time implies long listing
-    if not args.long_listing and not args.full_time:
-        return []
-
     # --full-time takes precedence
     if args.full_time:
         style = 'strftime(\'{0}\', {1})'.format(gufi_common.TIME_STYLES[gufi_common.FULL_TIME], name)
