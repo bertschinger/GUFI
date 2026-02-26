@@ -101,8 +101,8 @@ insert into apppart values (NULL,'vrsummaryall',8,'downloadf','download results 
 
 insert into appforminfo values (NULL,'vrsummaryall',1,'textlist','treelist','treelist','treelist','treelist','Search Local Tree','Path to Search Tree',1,2,0,'','','','','','','','','','','T');
 
-insert into appforminfo values (NULL,'vrsummaryall',3,'text','DIR_path','rpath(sname,sroll) as path','path','path','Path','Path of Dir',1,1,0,'pattern=''[A-Za-z,&#39;%._]+''','placeholder=''%str% or "str1","str2" for in''','','','','','','','','','W');
-insert into appforminfo values (NULL,'vrsummaryall',3,'text','DIR_name','name as name','name','name','Directory Name','Name of Directory',1,1,0,'pattern=''[A-Za-z,&#39;%._]+''','placeholder=''%str% or "str1","str2" for in''','','','','','','','','','W');
+insert into appforminfo values (NULL,'vrsummaryall',3,'text','DIR_path','rpath(sname,sroll) as path','path','path','Path','Path of Dir',1,1,0,'pattern=''[A-Za-z0-9,&#39;%._]+''','placeholder=''%str% or "str1","str2" for in''','','','','','','','','','W');
+insert into appforminfo values (NULL,'vrsummaryall',3,'text','DIR_name','name as name','name','name','Directory Name','Name of Directory',1,1,0,'pattern=''[A-Za-z0-9,&#39;%._]+''','placeholder=''%str% or "str1","str2" for in''','','','','','','','','','W');
 insert into appforminfo values (NULL,'vrsummaryall',3,'int64','DIR_nlink','nlink as nlink','nlink','nlink','number of dlinks','number of dlinks',1,1,0,'min=''0''','','','','','','','','','','W');
 insert into appforminfo values (NULL,'vrsummaryall',3,'int64','DIR_uid','uid as uid','uid','uid','Directory UID','Directory UID',1,1,0,'min=''0''','','','','','','','','','','W');
 insert into appforminfo values (NULL,'vrsummaryall',3,'int64','DIR_gid','gid as gid','gid','gid','Directory GID','Directory GID',1,1,0,'min=''0''','','','','','','','','','','W');
@@ -142,6 +142,7 @@ insert into appforminfo values (NULL,'vrsummaryall',3,'int64','DIR_totmtt','totm
 insert into appforminfo values (NULL,'vrsummaryall',3,'int64','DIR_totsize','totsize as totsize','totsize','totsize','Directory total files size','Directory total files size',1,1,0,'min=''0''','','','','','','','','','','W');
 
 insert into appforminfo values (NULL,'vrsummaryall',4,'text','DIR_pathname','rpath(sname,sroll)||''/''||name as pathname','pathname','pathname','Pathname','Name of Dir',1,1,0,'required','checked','','','','','','','','','S');
+insert into appforminfo values (NULL,'vrsummaryall',4,'text','DIR_hostname','hostname() as hostname','hostname','hostname','hostname','Name of GUFI host',1,1,0,'','','','','','','','','','','S');
 insert into appforminfo values (NULL,'vrsummaryall',4,'int64','DIR_mode','mode as mode','mode','modetotxt(mode) as mode','Dir DMode','DMode of Dir',1,1,0,'','','','','','','','','','','S');
 insert into appforminfo values (NULL,'vrsummaryall',4,'int64','DIR_nlink','nlink as nlink','nlink','nlink','Dir nlink','nlink of Dir',1,1,0,'','','','','','','','','','','S');
 insert into appforminfo values (NULL,'vrsummaryall',4,'int64','DIR_uid','uid as duid','uid','uid','Dir uid','uid of Dir',1,1,0,'','','','','','','','','','','S');

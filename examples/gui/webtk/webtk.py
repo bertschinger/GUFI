@@ -676,6 +676,11 @@ def output_results(cursor,vfq,vqtable,fq,rq_vt,rq_rowmax,queryin_window,gqglobal
 
   # now we do some fancy interrogation of the sql output to format into rows and columns and put headings in
   all_entries = cursor.fetchall()
+  #debugging64
+  #for ent in all_entries:
+  #  print('debugging64 row')
+  #  print(ent[0])
+  #  print(ent[1])
   nrows = len(all_entries)
   # this is what happens if the query runs ok but no records are retrieved
   outline='run_query: nrows %s' % nrows
@@ -1332,13 +1337,21 @@ def run_query(gqglobal,gqapps,cursor,gqformin,queryin_window):
       vq += "max_level="
       vq += rq_maxlevel
       vq += ","
+    # need to check owneruid to see if its zero, if it is we just put in a dir_match_uid no =
     if rq_owneruid!='':
-      vq += "dir_match_uid="
-      vq += rq_owneruid
+      if rq_owneruid=='0':
+        vq += "dir_match_uid="
+      else:
+        vq += "dir_match_uid="
+        vq += rq_owneruid
       vq += ","
+    # need to check ownergid to see if its zero, if it is we just put in a dir_match_uid no =
     if rq_ownergid!='':
-      vq += "dir_match_gid="
-      vq += rq_ownergid
+      if rq_ownergid=='0':
+        vq += "dir_match_gid="
+      else:
+        vq += "dir_match_gid="
+        vq += rq_ownergid
       vq += ","
 
   # so we process the appsqueries table matching on app name and build the query passed to
